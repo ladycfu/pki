@@ -10,6 +10,7 @@ javac(pki-tomcat-classes
         ${JAXRS_API_JAR}
         ${JASPIC_API_JAR}
         ${COMMONS_LANG_JAR}
+        ${COMMONS_NET_JAR}
         ${TOMCAT_API_JAR} ${TOMCAT_CATALINA_JAR} ${TOMCAT_COYOTE_JAR} ${TOMCAT_UTIL_SCAN_JAR}
         ${SLF4J_API_JAR}
         ${JSS_JAR} ${TOMCATJSS_JAR}

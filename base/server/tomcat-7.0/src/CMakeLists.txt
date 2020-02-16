@@ -9,6 +9,7 @@ javac(pki-tomcat-classes
         ${SERVLET_JAR}
         ${JAXRS_API_JAR}
         ${APACHE_COMMONS_LANG_JAR}
+        ${APACHE_COMMONS_NET_JAR}
         ${TOMCAT_CATALINA_JAR} ${TOMCAT_UTIL_SCAN_JAR}
         ${SLF4J_API_JAR}
         ${JSS_JAR} ${TOMCATJSS_JAR}
