@@ -81,6 +81,7 @@ public abstract class Profile {
     public static final String PROP_ENABLE = "enable";
     public static final String PROP_ENABLE_BY = "enableBy";
     public static final String PROP_IS_RENEWAL = "renewal";
+    public static final String PROP_IS_SERVERSIDE_KEYGEN_ENROLL = "serverside_keygen_enroll";
     public static final String PROP_XML_OUTPUT = "xmlOutput";
     public static final String PROP_VISIBLE = "visible";
     public static final String PROP_INPUT_LIST = "list";
@@ -141,6 +142,21 @@ public abstract class Profile {
 
     public void setRenewal(boolean renewal) {
         mConfig.putBoolean(PROP_IS_RENEWAL, renewal);
+    }
+
+    /**
+     * Is this a serverSideKeygenEnroll profile
+     */
+    public String isServerSideKeygenEnroll() {
+        try {
+            return mConfig.getString(PROP_IS_SERVERSIDE_KEYGEN_ENROLL, "false");
+        } catch (EBaseException e) {
+            return "false";
+        }
+    }
+
+    public void setServerSideKeygenEnroll(boolean ssKeygenEnroll) {
+        mConfig.putBoolean(PROP_IS_SERVERSIDE_KEYGEN_ENROLL, ssKeygenEnroll);
     }
 
     /**

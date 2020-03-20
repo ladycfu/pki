@@ -451,6 +451,7 @@ public class CertRequestService extends PKIService implements CertRequestResourc
         CertEnrollmentRequest request = new CertEnrollmentRequest();
         request.setProfileId(profileId);
         request.setRenewal(Boolean.parseBoolean(profile.isRenewal()));
+        request.setServerSideKeygenEnroll(Boolean.parseBoolean(profile.isServerSideKeygenEnroll()));
         request.setRemoteAddr("");
         request.setRemoteHost("");
 
