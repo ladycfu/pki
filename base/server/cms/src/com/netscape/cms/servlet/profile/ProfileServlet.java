@@ -123,6 +123,7 @@ public class ProfileServlet extends CMSServlet {
     public final static String ARG_INPUT_NAME = "inputName";
     public final static String ARG_INPUT_VAL = "inputVal";
     public final static String ARG_IS_RENEWAL = "renewal";
+    public final static String ARG_IS_SERVERSIDE_KEYGEN = "serverSideKeygen";
     public final static String ARG_XML_OUTPUT = "xmlOutput";
     public final static String ARG_OUTPUT_LIST = "outputList";
     public final static String ARG_OUTPUT_ID = "outputId";

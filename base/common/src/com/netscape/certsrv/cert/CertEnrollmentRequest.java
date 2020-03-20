@@ -57,9 +57,20 @@ public class CertEnrollmentRequest extends ResourceMessage {
     private static final String PROFILE_ID = "profileId";
     private static final String RENEWAL = "renewal";
     private static final String SERIAL_NUM = "serial_num";
+    //cfu
+    // cfu: how about the PROP_IS_SERVERSIDE_KEYGEN in
+    //   server/src/com/netscape/cms/profile/common/Profile.java ?
+    private static final String SERVERSIDE_KEYGEN = "serverside_keygen";
+    private static final String SERVERSIDE_KEYGEN_P12_PASSWD = "serverSideKeygenP12Passwd";
 
     @XmlElement(name="ProfileID")
     protected String profileId;
+
+    @XmlElement(name="ServerSideKeygen")
+    protected boolean serverSideKeygen;
+
+    @XmlElement(name="ServerSideKeygenP12Passwd")
+    protected String serverSideKeygenP12Passwd;
 
     @XmlElement(name="Renewal")
     protected boolean renewal;
@@ -89,6 +100,10 @@ public class CertEnrollmentRequest extends ResourceMessage {
         String renewalStr = form.getFirst(RENEWAL);
         serialNum = new CertId(form.getFirst(SERIAL_NUM));
         renewal = new Boolean(renewalStr);
+
+        String serverSideKeygenStr = form.getFirst(SERVERSIDE_KEYGEN);
+        serverSideKeygen= new Boolean(serverSideKeygenStr);
+        serverSideKeygenP12Passwd = form.getFirst(SERVERSIDE_KEYGEN_P12_PASSWD);
     }
 
     /**
@@ -117,6 +132,20 @@ public class CertEnrollmentRequest extends ResourceMessage {
      */
     public void setRenewal(boolean renewal) {
         this.renewal = renewal;
+    }
+
+    /**
+     * @return serverSideKeygen
+     */
+    public boolean isServerSideKeygen() {
+        return serverSideKeygen;
+    }
+
+    /**
+     * @param ssKeygen set serverSideKeygen
+     */
+    public void setServerSideKeygen(boolean ssKeygen) {
+        this.serverSideKeygen = ssKeygen;
     }
 
     public void addInput(ProfileInput input) {
@@ -213,6 +242,8 @@ public class CertEnrollmentRequest extends ResourceMessage {
         if (serialNum != null) ret.put(SERIAL_NUM, serialNum.toHexString());
         if (remoteHost != null) ret.put("remoteHost", remoteHost);
         if (remoteAddr != null) ret.put("remoteAddr", remoteAddr);
+        ret.put("isSSKeygen", Boolean.valueOf(serverSideKeygen).toString());
+        if (serverSideKeygenP12Passwd != null) ret.put(SERVERSIDE_KEYGEN_P12_PASSWD, serverSideKeygenP12Passwd);
 
         for (ProfileInput input: inputs) {
             for (ProfileAttribute attr : input.getAttributes()) {
@@ -299,6 +330,10 @@ public class CertEnrollmentRequest extends ResourceMessage {
         result = prime * result + ((remoteHost == null) ? 0 : remoteHost.hashCode());
         result = prime * result + (renewal ? 1231 : 1237);
         result = prime * result + ((serialNum == null) ? 0 : serialNum.hashCode());
+
+//cfu?
+        result = prime * result + (serverSideKeygen ? 1331 : 1337);
+        result = prime * result + ((serverSideKeygenP12Passwd == null) ? 0 : serverSideKeygenP12Passwd.hashCode());
         return result;
     }
 
@@ -342,6 +377,13 @@ public class CertEnrollmentRequest extends ResourceMessage {
             if (other.serialNum != null)
                 return false;
         } else if (!serialNum.equals(other.serialNum))
+            return false;
+        if (serverSideKeygen != other.serverSideKeygen)
+            return false;
+        if (serverSideKeygenP12Passwd == null) {
+            if (other.serverSideKeygenP12Passwd != null)
+                return false;
+        } else if (!serverSideKeygenP12Passwd.equals(other.serverSideKeygenP12Passwd))
             return false;
         return true;
     }

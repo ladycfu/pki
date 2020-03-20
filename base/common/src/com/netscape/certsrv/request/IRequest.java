@@ -197,6 +197,9 @@ public interface IRequest extends Serializable {
     public static final String KEY_GEN_USAGES = "keyGenUsages";
     public static final String KEY_GEN_TRANS_WRAPPED_SESSION_KEY = "transWrappedSessionKey";
 
+    // Server-side Keygen enrollment
+    public static final String SERVER_SIDE_KEYGEN_ENROLL = "serverSideKeygenEnroll";
+
     // requestor type values.
     public static final String REQUESTOR_EE = "EE";
     public static final String REQUESTOR_RA = "RA";

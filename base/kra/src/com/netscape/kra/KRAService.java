@@ -50,7 +50,7 @@ public class KRAService implements IService {
     public final static String SECURITY_DATA_RECOVERY = IRequest.SECURITY_DATA_RECOVERY_REQUEST;
     public final static String SYMKEY_GENERATION = IRequest.SYMKEY_GENERATION_REQUEST;
     public final static String ASYMKEY_GENERATION = IRequest.ASYMKEY_GENERATION_REQUEST;
-
+    public final static String SERVER_SIDE_KEYGEN_ENROLL = IRequest.SERVER_SIDE_KEYGEN_ENROLL;
 
     // private variables
     private IKeyRecoveryAuthority mKRA = null;
@@ -69,6 +69,8 @@ public class KRAService implements IService {
         mServices.put(SECURITY_DATA_RECOVERY, new SecurityDataRecoveryService(kra));
         mServices.put(SYMKEY_GENERATION, new SymKeyGenService(kra));
         mServices.put(ASYMKEY_GENERATION, new AsymKeyGenService(kra));
+        // cfu: Todo
+        //mServices.put(SERVER_SIDE_KEYGEN_ENROLL, new AsymKeyGenService(kra));
     }
 
     /**

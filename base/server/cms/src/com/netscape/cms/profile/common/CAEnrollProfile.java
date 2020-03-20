@@ -99,6 +99,16 @@ public class CAEnrollProfile extends EnrollProfile {
             throw new EProfileException("No CA Service");
         }
 
+        //cfu: if isServerSideKeygen, send keygen request to KRA
+        boolean isSSKeygen = false;
+        String isSSKeygenStr = request.getExtDataInString("isServerSideKeygen");
+        if (isSSKeygenStr.equalsIgnoreCase("true")) {
+            CMS.debug("CAEnrollProfile: execute: isServerSideKeygen = true");
+            isSSKeygen = true;
+        } else {
+            CMS.debug("CAEnrollProfile: execute: isServerSideKeygen = false");
+        }
+
         // if PKI Archive Option present, send this request
         // to DRM
         byte optionsData[] = request.getExtDataInByteArray(REQUEST_ARCHIVE_OPTIONS);
