@@ -544,7 +544,7 @@ function setCRMFRequest()
   } else if (typeof(crypto) != "undefined" && typeof(crypto.version) != "undefined") {
     document.writeln('<form name="ReqForm" onSubmit="return validate();" method="post" action="' + uri + '">');
   } else {
-    document.writeln('<form name="ReqForm" method="post" action="' + uri + '">');
+    document.writeln('<form name="ReqForm" method="post" onSubmit="return passwdValidate()" action="' + uri + '">');
    }
 </script>
 
@@ -760,6 +760,7 @@ for (var m = 0; m < inputPluginListSet.length; m++) {
         document.writeln('<tr>');
         document.write('<td align=right><font size="-1" face="PrimaSans BT, Verdana, sans-serif">PKCS #12 Password again:</font></td>');
         document.write('<td align=left><font size="-1" face="PrimaSans BT, Verdana, sans-serif"><input type=password name="p12PasswordAgain" value="" AutoComplete=off ></font></td>');
+        document.writeln('<SELECT NAME="keyType">'+getKeyTypesOptionsForKeyGen()+'</SELECT>&nbsp;&nbsp;<SELECT NAME=\"cryptprovider\"></SELECT>');
         document.writeln('<SELECT NAME="keyLength">'+keyLengthsCurvesOptions("")+'</SELECT>&nbsp;&nbsp;<SELECT NAME=\"cryptprovider\"></SELECT>');
         document.writeln('</tr>');
 
