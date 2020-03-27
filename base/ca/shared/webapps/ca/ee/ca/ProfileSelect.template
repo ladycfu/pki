@@ -392,16 +392,7 @@ function updateKeyLengthsCurvesOptions() {
   while (cSelect.options.length > 0) { 
     cSelect.remove(0); 
   }
-  var optionsList = keyLengthsCurvesOptions("");
-
-  console.log("updateKeyLengthsCurvesOptions() optionsList" + optionsList)
- 
- // try { 
-    cSelect.innerHTML = optionsList;  // this will fail in DOM browsers but is needed for IE 
- // } 
- // catch (e) { 
-  //  cSelect.appendChild(optionsList); 
-  //}  
+  cSelect.innerHTML = keyLengthsCurvesOptions("");
 }
 
 function isNumeric(sText)
@@ -775,7 +766,6 @@ for (var m = 0; m < inputPluginListSet.length; m++) {
     document.writeln('</FONT>');
     document.writeln('</td>');
     document.writeln('<td>');
-    console.log("inputListSet[n].inputSyntax" + inputListSet[n].inputSyntax)
     if (inputListSet[n].inputSyntax == 'string') {
       document.writeln('<input type=text name=' + inputListSet[n].inputId + '>');
     } else if (inputListSet[n].inputSyntax == 'server_side_keygen_request_type') {
@@ -788,10 +778,11 @@ for (var m = 0; m < inputPluginListSet.length; m++) {
         document.writeln('<tr>');
         document.writeln('<td align=right><font size="-1" face="PrimaSans BT, Verdana, sans-serif">PKCS #12 Password again:</font></td>');
         document.writeln('<td align=left><font size="-1" face="PrimaSans BT, Verdana, sans-serif"><input type=password name="p12PasswordAgain" value="" AutoComplete=off ></font></td>');
-        document.writeln('<SELECT NAME="keyType" ID="keyTypeId" onChange=\"updateKeyLengthsCurvesOptions()\">'+getKeyTypesOptionsForKeyGen() + '</SELECT>&nbsp');
-        document.writeln('<SELECT NAME="keySize" ID="keySizeId">'+keyLengthsCurvesOptions("")+'</SELECT>&nbsp');
         document.writeln('</tr>');
-
+    } else if (inputListSet[n].inputSyntax == 'server_side_keygen_key_type') {
+      document.writeln('<SELECT NAME="keyType" ID="keyTypeId" onChange=\"updateKeyLengthsCurvesOptions()\">'+getKeyTypesOptionsForKeyGen() + '</SELECT>&nbsp');
+    } else if (inputListSet[n].inputSyntax == 'server_side_keygen_key_size') {
+      document.writeln('<SELECT NAME="keySize" ID="keySizeId">'+keyLengthsCurvesOptions("")+'</SELECT>&nbsp');
     } else if (inputListSet[n].inputSyntax == 'cert_request') {
       document.writeln('<textarea cols=60 rows=10 name=' + inputListSet[n].inputId + '></textarea>');
     } else if (inputListSet[n].inputSyntax == 'cert_request_type') {

@@ -18,17 +18,16 @@
 package com.netscape.cms.profile.input;
 
 import java.util.Locale;
-import java.util.Map;
 
 import com.netscape.certsrv.apps.CMS;
 import com.netscape.certsrv.base.IConfigStore;
 import com.netscape.certsrv.profile.EProfileException;
-import com.netscape.certsrv.property.Descriptor;
-import com.netscape.certsrv.property.IDescriptor;
-import com.netscape.certsrv.request.IRequest;
 import com.netscape.certsrv.profile.IProfile;
 import com.netscape.certsrv.profile.IProfileContext;
 import com.netscape.certsrv.profile.IProfileInput;
+import com.netscape.certsrv.property.Descriptor;
+import com.netscape.certsrv.property.IDescriptor;
+import com.netscape.certsrv.request.IRequest;
 
 /**
  * This class implements input for the Server-Side Keygen Enrollment
@@ -39,17 +38,13 @@ import com.netscape.certsrv.profile.IProfileInput;
 public class ServerKeygenInput extends EnrollInput implements IProfileInput {
 
     public static final String P12PASSWORD = "serverSideKeygenP12Passwd";
-/*
     public static final String KEY_TYPE = "keyType";
     public static final String KEY_SIZE = "keySize";
-*/
 
     public ServerKeygenInput() {
         addValueName(P12PASSWORD);
-/*
         addValueName(KEY_TYPE);
         addValueName(KEY_SIZE);
-*/
     }
 
     /**
@@ -99,16 +94,14 @@ public class ServerKeygenInput extends EnrollInput implements IProfileInput {
             return new Descriptor(IDescriptor.SERVER_SIDE_KEYGEN_REQUEST_TYPE, null,
                     null,
                     CMS.getUserMessage(locale, "CMS_PROFILE_SERVER_KEYGEN_P12PASSWD"));
-/*
         } else if (name.equals(KEY_TYPE)) {
-            return new Descriptor(IDescriptor.STRING, null,
+            return new Descriptor(IDescriptor.SERVER_SIDE_KEYGEN_KEY_TYPE, null,
                     null,
                     CMS.getUserMessage(locale, "CMS_PROFILE_SERVER_KEYGEN_KEY_TYPE"));
         } else if (name.equals(KEY_SIZE)) {
-            return new Descriptor(IDescriptor.STRING, null,
+            return new Descriptor(IDescriptor.SERVER_SIDE_KEYGEN_KEY_SIZE, null,
                     null,
                     CMS.getUserMessage(locale, "CMS_PROFILE_SERVER_KEYGEN_KEY_SIZE"));
-*/
         }
         return null;
     }

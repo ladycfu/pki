@@ -19,23 +19,18 @@ package com.netscape.cms.profile.def;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.security.interfaces.DSAParams;
 import java.util.Locale;
 import java.util.Vector;
-import java.security.KeyPair;
-import java.security.PublicKey;
 
-import netscape.security.provider.DSAPublicKey;
-import netscape.security.provider.RSAPublicKey;
-import netscape.security.x509.AlgorithmId;
-import netscape.security.x509.CertificateX509Key;
-import netscape.security.x509.X509CertInfo;
-import netscape.security.x509.X509Key;
+import org.mozilla.jss.CryptoManager;
+import org.mozilla.jss.crypto.CryptoToken;
 
 import com.netscape.certsrv.apps.CMS;
 import com.netscape.certsrv.base.IConfigStore;
 import com.netscape.certsrv.profile.EProfileException;
-import com.netscape.certsrv.profile.IEnrollProfile;
 import com.netscape.certsrv.profile.IProfile;
 import com.netscape.certsrv.property.Descriptor;
 import com.netscape.certsrv.property.EPropertyException;
@@ -43,8 +38,12 @@ import com.netscape.certsrv.property.IDescriptor;
 import com.netscape.certsrv.request.IRequest;
 import com.netscape.cmsutil.crypto.CryptoUtil;
 
-import org.mozilla.jss.CryptoManager;
-import org.mozilla.jss.crypto.CryptoToken;
+import netscape.security.provider.DSAPublicKey;
+import netscape.security.provider.RSAPublicKey;
+import netscape.security.x509.AlgorithmId;
+import netscape.security.x509.CertificateX509Key;
+import netscape.security.x509.X509CertInfo;
+import netscape.security.x509.X509Key;
 
 /**
  * This class implements an enrollment default policy
@@ -248,16 +247,46 @@ public class ServerKeygenUserKeyDefault extends EnrollDefault {
 //            cfu test pubKey
             CryptoManager cm = CryptoManager.getInstance();
             CryptoToken token = cm.getInternalKeyStorageToken();
-            String keySizeStr = request.getExtDataInString("keySize");
-            int keySize = 2048;
-            if (keySizeStr != null) {
-                CMS.debug("ServerKeygenUserKeyDefault: populate: keySize in request: " + keySizeStr);
-                keySize = Integer.parseInt(keySizeStr);
+
+            String keyTypeStr = request.getExtDataInString("keyType");
+            String keyType = "RSA";
+            if (keyTypeStr != null && !keyTypeStr.isEmpty()) {
+                CMS.debug("ServerKeygenUserKeyDefault: populate: keyType in request: " + keyTypeStr);
+                keyType = keyTypeStr;
             } else {
-                CMS.debug("ServerKeygenUserKeyDefault: populate: keySize in request null;  default to 2048");
+                CMS.debug("ServerKeygenUserKeyDefault: populate: keyType in request null; default to RSA");
             }
-            KeyPair pair = CryptoUtil.generateRSAKeyPair(token, keySize, true);
+            KeyPair pair = null;
+
+            String keySizeCurveStr = request.getExtDataInString("keySize");
+            if (keyType.contentEquals("RSA")) {
+                int keySize = 2048;
+                if (keySizeCurveStr != null && !keySizeCurveStr.isEmpty()) {
+                    CMS.debug("ServerKeygenUserKeyDefault: populate: keySize in request: " + keySizeCurveStr);
+                    keySize = Integer.parseInt(keySizeCurveStr);
+                } else {
+                    CMS.debug("ServerKeygenUserKeyDefault: populate: keySize in request null;  default to 2048");
+                }
+
+                pair = CryptoUtil.generateRSAKeyPair(token, keySize, true);
+            } else if (keyType.contentEquals("EC")) {
+                // TODO: dmoluguw: Fix the following to generate right Key ECC keys
+
+                String curveName = "nistp521";
+                if (keySizeCurveStr != null && !keySizeCurveStr.isEmpty()) {
+                    CMS.debug("ServerKeygenUserKeyDefault: populate: keyCurve in request: " + keySizeCurveStr);
+                    curveName = keySizeCurveStr;
+                } else {
+                    CMS.debug("ServerKeygenUserKeyDefault: populate: keySize in request null;  default to nistp521");
+                }
+                pair = CryptoUtil.generateECCKeyPair(token, curveName);
+
+            } else {
+                throw new Exception("Unsupported keyType: " + keyType);
+            }
+
             PublicKey pubKey = pair.getPublic();
+
 //            byte[] certKeyData = request.getExtDataInByteArray(IEnrollProfile.REQUEST_KEY);
             byte[] certKeyData = pubKey.getEncoded();
             if (certKeyData != null) {
