@@ -1,60 +1,6 @@
-################################################################################
-Name:             pki-core
-################################################################################
-
-%global           vendor dogtag
-%global           brand Dogtag
-
-Summary:          Certificate System - PKI Core Components
-URL:              https://www.dogtagpki.org/
-License:          GPLv2
-
-# Optionally fetch the release from the environment variable 'PKI_RELEASE'
-%define use_pki_release %{getenv:USE_PKI_RELEASE}
-%if 0%{?use_pki_release}
-%define pki_release %{getenv:PKI_RELEASE}
-%endif
-
-%if 0%{?rhel}
-Version:                10.5.17
-%define redhat_release  1
-%define redhat_stage    0
-%define default_release %{redhat_release}.%{redhat_stage}
-#%define default_release %{redhat_release}
-%else
-Version:                10.5.17
-%define fedora_release  1
-%define fedora_stage    0
-%define default_release %{fedora_release}.%{fedora_stage}
-%endif
-
-%if 0%{?use_pki_release}
-Release:          %{pki_release}%{?dist}
-%else
-Release:          %{default_release}%{?dist}
-%endif
-
-%if 0%{?rhel}
-# NOTE:  In the future, as a part of its path, this URL will contain a release
-#        directory which consists of the fixed number of the upstream release
-#        upon which this tarball was originally based.
-Source:           https://www.dogtagpki.org/pki/sources/%{name}/%{version}/%{release}/rhel/%{name}-%{version}%{?prerel}.tar.gz
-%else
-Source:           https://github.com/dogtagpki/pki/archive/v%{version}/pki-%{version}.tar.gz
-%endif
-
-#Patch0:           pki-core-CA-OCSP-SystemCertsVerification.patch
-
-# Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
-#
-#     NOTE:  For "alpha" releases, will be ".a1", ".a2", etc.
-#            For "beta" releases, will be ".b1", ".b2", etc.
-#
-%define version_phase "%(echo `echo %{version} | awk -F. '{ print $4 }'`)"
-
-################################################################################
-# Python
-################################################################################
+# Python, keep every statement on a single line
+%{!?__python2: %global __python2 /usr/bin/python2}
+%{!?python2_sitelib: %global python2_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 %if 0%{?fedora} || 0%{?rhel} > 7
 %global with_python3 1
@@ -73,11 +19,8 @@ Source:           https://github.com/dogtagpki/pki/archive/v%{version}/pki-%{ver
 %global package_fedora_packages 1
 %endif
 
-################################################################################
 # Java
-################################################################################
-
-%define java_home %{_usr}/lib/jvm/jre-1.8.0-openjdk
+%define java_home /usr/lib/jvm/jre-1.8.0-openjdk
 
 # Tomcat
 %if 0%{?fedora} || 0%{?rhel} > 7
@@ -88,10 +31,7 @@ Source:           https://github.com/dogtagpki/pki/archive/v%{version}/pki-%{ver
 %define with_tomcat8 0
 %endif
 
-################################################################################
 # RESTEasy
-################################################################################
-
 %if 0%{?rhel} && 0%{?rhel} <= 7
 %define jaxrs_api_jar /usr/share/java/resteasy-base/jaxrs-api.jar
 %define resteasy_lib /usr/share/java/resteasy-base
@@ -100,10 +40,7 @@ Source:           https://github.com/dogtagpki/pki/archive/v%{version}/pki-%{ver
 %define resteasy_lib /usr/share/java/resteasy
 %endif
 
-################################################################################
-# PKI
-################################################################################
-
+# Dogtag
 %bcond_without    server
 %bcond_without    javadoc
 
@@ -119,12 +56,38 @@ Source:           https://github.com/dogtagpki/pki/archive/v%{version}/pki-%{ver
 %define pki_gid 17
 %define pki_homedir /usr/share/pki
 
-################################################################################
-# Build Dependencies
-################################################################################
+# Optionally fetch the release from the environment variable 'PKI_RELEASE'
+%define use_pki_release %{getenv:USE_PKI_RELEASE}
+%if 0%{?use_pki_release}
+%define pki_release %{getenv:PKI_RELEASE}
+%endif
 
-# autosetup
-BuildRequires:    git
+Name:             pki-core
+%if 0%{?rhel}
+Version:                10.5.17
+%define redhat_release  6
+%define redhat_stage    0
+%define default_release %{redhat_release}.%{redhat_stage}
+#%define default_release %{redhat_release}
+%else
+Version:                10.5.17
+%define fedora_release  6
+%define fedora_stage    0
+%define default_release %{fedora_release}.%{fedora_stage}
+%endif
+
+%if 0%{?use_pki_release}
+Release:          %{pki_release}%{?dist}
+%else
+Release:          %{default_release}%{?dist}
+%endif
+
+Summary:          Certificate System - PKI Core Components
+URL:              http://pki.fedoraproject.org/
+License:          GPLv2
+Group:            System Environment/Daemons
+
+BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:    cmake >= 2.8.9-1
 BuildRequires:    gcc-c++
@@ -138,16 +101,14 @@ BuildRequires:    apache-commons-io
 BuildRequires:    apache-commons-lang
 BuildRequires:    jakarta-commons-httpclient
 BuildRequires:    slf4j
-%if 0%{?rhel} && 0%{?rhel} <= 7
-# no slf4j-jdk14
-%else
+%if 0%{?fedora} || 0%{?rhel} > 7
 BuildRequires:    slf4j-jdk14
 %endif
 BuildRequires:    nspr-devel
 BuildRequires:    nss-devel >= 3.28.3
 
 %if 0%{?rhel} && 0%{?rhel} <= 7
-BuildRequires:    nuxwdog-client-java >= 1.0.3-8
+BuildRequires:    nuxwdog-client-java >= 1.0.5-1
 %else
 BuildRequires:    nuxwdog-client-java >= 1.0.3-14
 %endif
@@ -204,25 +165,24 @@ BuildRequires:    policycoreutils-python-utils
 BuildRequires:    python-ldap
 BuildRequires:    junit
 BuildRequires:    jpackage-utils >= 0:1.7.5-10
+BuildRequires:    jss >= 4.4.7-1
 %if 0%{?rhel} && 0%{?rhel} <= 7
-BuildRequires:    jss >= 4.4.4-5
-BuildRequires:    tomcatjss >= 7.2.1-8
+BuildRequires:    tomcatjss >= 7.2.5-1
 %else
-BuildRequires:    jss >= 4.4.4-3
 BuildRequires:    tomcatjss >= 7.2.4-4
 %endif
 BuildRequires:    systemd-units
 
 %if 0%{?with_python3}
-BuildRequires:    python3-cryptography
-BuildRequires:    python3-devel
-BuildRequires:    python3-lxml
-BuildRequires:    python3-nss
-BuildRequires:    python3-pyldap
-BuildRequires:    python3-requests >= 2.6.0
-BuildRequires:    python3-six
+BuildRequires:  python3-cryptography
+BuildRequires:  python3-devel
+BuildRequires:  python3-lxml
+BuildRequires:  python3-nss
+BuildRequires:  python3-pyldap
+BuildRequires:  python3-requests >= 2.6.0
+BuildRequires:  python3-six
 %endif  # with_python3
-BuildRequires:    python-devel
+BuildRequires:  python-devel
 
 # additional build requirements needed to build native 'tpsclient'
 # REMINDER:  Revisit these once 'tpsclient' is rewritten as a Java app
@@ -235,6 +195,27 @@ BuildRequires:    python
 BuildRequires:    systemd
 BuildRequires:    zlib
 BuildRequires:    zlib-devel
+
+%if 0%{?rhel}
+# NOTE:  In the future, as a part of its path, this URL will contain a release
+#        directory which consists of the fixed number of the upstream release
+#        upon which this tarball was originally based.
+Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{release}/rhel/%{name}-%{version}%{?prerel}.tar.gz
+%else
+Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{release}/%{name}-%{version}%{?prerel}.tar.gz
+%endif
+
+#Patch0:  pki-core-rhel-7-8-rhcs-9-6-alpha.patch
+#Patch1:  pki-core-rhel-7-8-rhcs-9-6-beta.patch
+#Patch2:  pki-core-Fixed-missing-audit-event.patch
+#Patch3:  pki-core-rhel-7-8-rhcs-9-6-snapshot-2.patch
+
+# Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
+#
+#     NOTE:  For "alpha" releases, will be ".a1", ".a2", etc.
+#            For "beta" releases, will be ".b1", ".b2", etc.
+#
+%define version_phase "%(echo `echo %{version} | awk -F. '{ print $4 }'`)"
 
 %global saveFileContext() \
 if [ -s /etc/selinux/config ]; then \
@@ -320,19 +301,14 @@ least one PKI Theme package:                                           \
 
 %description %{overview}
 
-################################################################################
-%package -n       pki-symkey
-################################################################################
 
+%package -n       pki-symkey
 Summary:          Symmetric Key JNI Package
+Group:            System Environment/Libraries
 
 Requires:         java-1.8.0-openjdk-headless
 Requires:         jpackage-utils >= 0:1.7.5-10
-%if 0%{?rhel} && 0%{?rhel} <= 7
-Requires:         jss >= 4.4.4-5
-%else
-Requires:         jss >= 4.4.4-3
-%endif
+Requires:         jss >= 4.4.7-1
 Requires:         nss >= 3.28.3
 
 Provides:         symkey = %{version}-%{release}
@@ -364,11 +340,11 @@ This package is a part of the PKI Core used by the Certificate System.
 
 %{overview}
 
-################################################################################
-%package -n       pki-base
-################################################################################
 
+%package -n       pki-base
 Summary:          Certificate System - PKI Framework
+Group:            System Environment/Base
+
 BuildArch:        noarch
 
 Provides:         pki-common = %{version}-%{release}
@@ -393,11 +369,9 @@ Certificate System.
 
 %{overview}
 
-################################################################################
 %package -n       pki-base-java
-################################################################################
-
 Summary:          Certificate System - Java Framework
+Group:            System Environment/Base
 BuildArch:        noarch
 
 Requires:         java-1.8.0-openjdk-headless
@@ -408,18 +382,12 @@ Requires:         apache-commons-lang
 Requires:         apache-commons-logging
 Requires:         jakarta-commons-httpclient
 Requires:         slf4j
-%if 0%{?rhel} && 0%{?rhel} <= 7
-# no slf4j-jdk14
-%else
+%if 0%{?fedora} || 0%{?rhel} > 7
 Requires:         slf4j-jdk14
 %endif
 Requires:         javassist
 Requires:         jpackage-utils >= 0:1.7.5-10
-%if 0%{?rhel} && 0%{?rhel} <= 7
-Requires:         jss >= 4.4.4-5
-%else
-Requires:         jss >= 4.4.4-3
-%endif
+Requires:         jss >= 4.4.7-1
 Requires:         ldapjdk >= 4.19-5
 Requires:         pki-base = %{version}-%{release}
 
@@ -427,18 +395,18 @@ Requires:         pki-base = %{version}-%{release}
 # 'resteasy-base' is a subset of the complete set of
 # 'resteasy' packages and consists of what is needed to
 # support the PKI Restful interface on certain RHEL platforms
-Requires:         resteasy-base-atom-provider >= 3.0.6-1
-Requires:         resteasy-base-client >= 3.0.6-1
-Requires:         resteasy-base-jaxb-provider >= 3.0.6-1
-Requires:         resteasy-base-jaxrs >= 3.0.6-1
-Requires:         resteasy-base-jaxrs-api >= 3.0.6-1
-Requires:         resteasy-base-jackson-provider >= 3.0.6-1
+Requires:    resteasy-base-atom-provider >= 3.0.6-1
+Requires:    resteasy-base-client >= 3.0.6-1
+Requires:    resteasy-base-jaxb-provider >= 3.0.6-1
+Requires:    resteasy-base-jaxrs >= 3.0.6-1
+Requires:    resteasy-base-jaxrs-api >= 3.0.6-1
+Requires:    resteasy-base-jackson-provider >= 3.0.6-1
 %else
-Requires:         resteasy-atom-provider >= 3.0.17-1
-Requires:         resteasy-client >= 3.0.17-1
-Requires:         resteasy-jaxb-provider >= 3.0.17-1
-Requires:         resteasy-core >= 3.0.17-1
-Requires:         resteasy-jackson-provider >= 3.0.17-1
+Requires:    resteasy-atom-provider >= 3.0.17-1
+Requires:    resteasy-client >= 3.0.17-1
+Requires:    resteasy-jaxb-provider >= 3.0.17-1
+Requires:    resteasy-core >= 3.0.17-1
+Requires:    resteasy-jackson-provider >= 3.0.17-1
 %endif
 
 Requires:         xalan-j2
@@ -456,11 +424,11 @@ This package is a part of the PKI Core used by the Certificate System.
 %{overview}
 
 %if 0%{?with_python3}
-################################################################################
-%package -n       pki-base-python3
-################################################################################
 
+%package -n       pki-base-python3
 Summary:          Certificate System - PKI Framework
+Group:            System Environment/Base
+
 BuildArch:        noarch
 
 Requires:         pki-base = %{version}-%{release}
@@ -480,11 +448,9 @@ This package is a part of the PKI Core used by the Certificate System.
 
 %endif  # with_python3 for python3-pki
 
-################################################################################
 %package -n       pki-tools
-################################################################################
-
 Summary:          Certificate System - PKI Tools
+Group:            System Environment/Base
 
 Provides:         pki-native-tools = %{version}-%{release}
 Provides:         pki-java-tools = %{version}-%{release}
@@ -510,12 +476,13 @@ This package is a part of the PKI Core used by the Certificate System.
 
 %{overview}
 
-%if %{with server}
-################################################################################
-%package -n       pki-server
-################################################################################
 
+%if %{with server}
+
+%package -n       pki-server
 Summary:          Certificate System - PKI Server Framework
+Group:            System Environment/Base
+
 BuildArch:        noarch
 
 Provides:         pki-deploy = %{version}-%{release}
@@ -531,7 +498,7 @@ Requires:         hostname
 Requires:         net-tools
 
 %if 0%{?rhel} && 0%{?rhel} <= 7
-Requires:    nuxwdog-client-java >= 1.0.3-8
+Requires:    nuxwdog-client-java >= 1.0.5-1
 %else
 Requires:    nuxwdog-client-java >= 1.0.3-14
 %endif
@@ -573,7 +540,7 @@ Requires(preun):  systemd-units
 Requires(postun): systemd-units
 Requires(pre):    shadow-utils
 %if 0%{?rhel} && 0%{?rhel} <= 7
-Requires:         tomcatjss >= 7.2.1-8
+Requires:         tomcatjss >= 7.2.5-1
 %else
 Requires:         tomcatjss >= 7.2.4-4
 %endif
@@ -609,11 +576,10 @@ The package contains scripts to create and remove PKI subsystems.
 
 %{overview}
 
-################################################################################
 %package -n       pki-ca
-################################################################################
-
 Summary:          Certificate System - Certificate Authority
+Group:            System Environment/Daemons
+
 BuildArch:        noarch
 
 Requires:         java-1.8.0-openjdk-headless
@@ -636,11 +602,11 @@ provided by the PKI Core used by the Certificate System.
 
 %{overview}
 
-################################################################################
-%package -n       pki-kra
-################################################################################
 
+%package -n       pki-kra
 Summary:          Certificate System - Key Recovery Authority
+Group:            System Environment/Daemons
+
 BuildArch:        noarch
 
 Requires:         java-1.8.0-openjdk-headless
@@ -669,11 +635,11 @@ provided by the PKI Core used by the Certificate System.
 
 %{overview}
 
-################################################################################
-%package -n       pki-ocsp
-################################################################################
 
+%package -n       pki-ocsp
 Summary:          Certificate System - Online Certificate Status Protocol Manager
+Group:            System Environment/Daemons
+
 BuildArch:        noarch
 
 Requires:         java-1.8.0-openjdk-headless
@@ -713,11 +679,11 @@ provided by the PKI Core used by the Certificate System.
 
 %{overview}
 
-################################################################################
-%package -n       pki-tks
-################################################################################
 
+%package -n       pki-tks
 Summary:          Certificate System - Token Key Service
+Group:            System Environment/Daemons
+
 BuildArch:        noarch
 
 Requires:         java-1.8.0-openjdk-headless
@@ -753,11 +719,10 @@ provided by the PKI Core used by the Certificate System.
 
 %{overview}
 
-################################################################################
-%package -n       pki-tps
-################################################################################
 
+%package -n       pki-tps
 Summary:          Certificate System - Token Processing Service
+Group:            System Environment/Daemons
 
 Provides:         pki-tps-tomcat
 Provides:         pki-tps-client
@@ -808,11 +773,11 @@ smart card.
 
 %{overview}
 
-################################################################################
-%package -n       pki-javadoc
-################################################################################
 
+%package -n       pki-javadoc
 Summary:          Certificate System - PKI Framework Javadocs
+Group:            Documentation
+
 BuildArch:        noarch
 
 Provides:         pki-util-javadoc = %{version}-%{release}
@@ -833,53 +798,52 @@ This package is a part of the PKI Core used by the Certificate System.
 
 %endif # %{with server}
 
-################################################################################
+
 %prep
-################################################################################
+%setup -q -n %{name}-%{version}%{?prerel}
 
-%autosetup -n %{name}-%{version}%{?prerel} -p 1 -S git
-# With "autosetup" it's not necessary to specify the "patchX" macros.
-# See http://rpm.org/user_doc/autosetup.html.
+#%patch0 -p1
+#%patch1 -p1
+#%patch2 -p1
+#%patch3 -p1
 
-################################################################################
+%clean
+%{__rm} -rf %{buildroot}
+
 %build
-################################################################################
-
 %{__mkdir_p} build
 cd build
 %cmake \
     --no-warn-unused-cli \
     -DVERSION=%{version}-%{release} \
-    -DVAR_INSTALL_DIR:PATH=/var \
-    -DBUILD_PKI_CORE:BOOL=ON \
-    -DJAVA_HOME=%{java_home} \
-    -DJAVA_LIB_INSTALL_DIR=%{_jnidir} \
-    -DSYSTEMD_LIB_INSTALL_DIR=%{_unitdir} \
+	-DVAR_INSTALL_DIR:PATH=/var \
+	-DBUILD_PKI_CORE:BOOL=ON \
+	-DJAVA_HOME=%{java_home} \
+	-DJAVA_LIB_INSTALL_DIR=%{_jnidir} \
+	-DSYSTEMD_LIB_INSTALL_DIR=%{_unitdir} \
 %if %{version_phase}
-    -DAPPLICATION_VERSION_PHASE="%{version_phase}" \
+	-DAPPLICATION_VERSION_PHASE="%{version_phase}" \
 %endif
 %if ! %{with_tomcat7}
-    -DWITH_TOMCAT7:BOOL=OFF \
+	-DWITH_TOMCAT7:BOOL=OFF \
 %endif
 %if ! %{with_tomcat8}
-    -DWITH_TOMCAT8:BOOL=OFF \
+	-DWITH_TOMCAT8:BOOL=OFF \
 %endif
-    -DJAXRS_API_JAR=%{jaxrs_api_jar} \
-    -DRESTEASY_LIB=%{resteasy_lib} \
+	-DJAXRS_API_JAR=%{jaxrs_api_jar} \
+	-DRESTEASY_LIB=%{resteasy_lib} \
 %if ! %{with server}
-    -DWITH_SERVER:BOOL=OFF \
+	-DWITH_SERVER:BOOL=OFF \
 %endif
 %if ! %{with server}
-    -DWITH_SERVER:BOOL=OFF \
+	-DWITH_SERVER:BOOL=OFF \
 %endif
 %if ! %{with javadoc}
-    -DWITH_JAVADOC:BOOL=OFF \
+	-DWITH_JAVADOC:BOOL=OFF \
 %endif
-    ..
+	..
 
-################################################################################
 %install
-################################################################################
 
 cd build
 
@@ -995,14 +959,8 @@ fi
 
 %endif
 
-%if 0%{?rhel}
-# no pylint
-%else
-
-################################################################################
-echo "Scanning Python code with pylint"
-################################################################################
-
+%if 0%{?fedora} || 0%{?rhel} > 7
+# Scanning the python code with pylint.
 %{__python2} ../pylint-build-scan.py rpm --prefix %{buildroot}
 if [ $? -ne 0 ]; then
     echo "pylint failed. RC: $?"
@@ -1014,10 +972,6 @@ if [ $? -ne 0 ]; then
     echo "pylint --py3k failed. RC: $?"
     exit 1
 fi
-
-################################################################################
-echo "Scanning Python code with flake8"
-################################################################################
 
 flake8 --config ../tox.ini %{buildroot}
 if [ $? -ne 0 ]; then
@@ -1057,12 +1011,12 @@ if (test("/etc/sysconfig/pki/ca") or
     test("/etc/sysconfig/pki/kra") or
     test("/etc/sysconfig/pki/ocsp") or
     test("/etc/sysconfig/pki/tks")) then
-   msg = "Unable to upgrade to Fedora 20.  There are PKI 9 instances\n" ..
+   msg = "Unable to upgrade to Fedora 20.  There are Dogtag 9 instances\n" ..
          "that will no longer work since they require Tomcat 6, and \n" ..
          "Tomcat 6 is no longer available in Fedora 20.\n\n" ..
          "Please follow these instructions to migrate the instances to \n" ..
-         "PKI 10:\n\n" ..
-         "https://www.dogtagpki.org/wiki/Migrating_PKI_9_Instances_to_PKI_10"
+         "Dogtag 10:\n\n" ..
+         "http://pki.fedoraproject.org/wiki/Migrating_Dogtag_9_Instances_to_Dogtag_10"
    error(msg)
 end
 %endif
@@ -1138,21 +1092,19 @@ fi
 
 %endif # %{with server}
 
-%if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
-################################################################################
-%files -n pki-symkey
-################################################################################
 
+%if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
+%files -n pki-symkey
+%defattr(-,root,root,-)
 %doc base/symkey/LICENSE
 %{_jnidir}/symkey.jar
 %{_libdir}/symkey/
 %endif
 
-%if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
-################################################################################
-%files -n pki-base
-################################################################################
 
+%if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
+%files -n pki-base
+%defattr(-,root,root,-)
 %doc base/common/LICENSE
 %doc base/common/LICENSE.LESSER
 %doc %{_datadir}/doc/pki-base/html
@@ -1173,10 +1125,7 @@ fi
 %endif
 
 %if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
-################################################################################
 %files -n pki-base-java
-################################################################################
-
 %{_datadir}/pki/examples/java/
 %{_datadir}/pki/lib/
 %dir %{_javadir}/pki
@@ -1187,10 +1136,8 @@ fi
 
 %if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
 %if %{with_python3}
-################################################################################
 %files -n pki-base-python3
-################################################################################
-
+%defattr(-,root,root,-)
 %doc base/common/LICENSE
 %doc base/common/LICENSE.LESSER
 %exclude %{python3_sitelib}/pki/server
@@ -1199,14 +1146,12 @@ fi
 %endif
 
 %if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
-################################################################################
 %files -n pki-tools
-################################################################################
-
+%defattr(-,root,root,-)
 %doc base/native-tools/LICENSE base/native-tools/doc/README
+%{_bindir}/pki
 %{_bindir}/p7tool
 %{_bindir}/pistool
-%{_bindir}/pki
 %{_bindir}/revoker
 %{_bindir}/setpin
 %{_bindir}/sslget
@@ -1270,11 +1215,10 @@ fi
 %endif
 
 %if %{with server}
-%if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
-################################################################################
-%files -n pki-server
-################################################################################
 
+%if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
+%files -n pki-server
+%defattr(-,root,root,-)
 %doc base/common/THIRD_PARTY_LICENSES
 %doc base/server/LICENSE
 %doc base/server/README
@@ -1320,11 +1264,10 @@ fi
 %{_datadir}/pki/server/
 %endif
 
-%if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
-################################################################################
-%files -n pki-ca
-################################################################################
 
+%if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
+%files -n pki-ca
+%defattr(-,root,root,-)
 %doc base/ca/LICENSE
 %{_javadir}/pki/pki-ca.jar
 %dir %{_datadir}/pki/ca
@@ -1337,10 +1280,8 @@ fi
 %endif
 
 %if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
-################################################################################
 %files -n pki-kra
-################################################################################
-
+%defattr(-,root,root,-)
 %doc base/kra/LICENSE
 %{_javadir}/pki/pki-kra.jar
 %dir %{_datadir}/pki/kra
@@ -1350,10 +1291,8 @@ fi
 %endif
 
 %if 0%{?package_fedora_packages} || 0%{?package_rhcs_packages}
-################################################################################
 %files -n pki-ocsp
-################################################################################
-
+%defattr(-,root,root,-)
 %doc base/ocsp/LICENSE
 %{_javadir}/pki/pki-ocsp.jar
 %dir %{_datadir}/pki/ocsp
@@ -1363,10 +1302,8 @@ fi
 %endif
 
 %if 0%{?package_fedora_packages} || 0%{?package_rhcs_packages}
-################################################################################
 %files -n pki-tks
-################################################################################
-
+%defattr(-,root,root,-)
 %doc base/tks/LICENSE
 %{_javadir}/pki/pki-tks.jar
 %dir %{_datadir}/pki/tks
@@ -1376,10 +1313,8 @@ fi
 %endif
 
 %if 0%{?package_fedora_packages} || 0%{?package_rhcs_packages}
-################################################################################
 %files -n pki-tps
-################################################################################
-
+%defattr(-,root,root,-)
 %doc base/tps/LICENSE
 %{_javadir}/pki/pki-tps.jar
 %dir %{_datadir}/pki/tps
@@ -1390,10 +1325,8 @@ fi
 %{_mandir}/man5/pki-tps-connector.5.gz
 %{_mandir}/man5/pki-tps-profile.5.gz
 %{_mandir}/man1/tpsclient.1.gz
-
 # files for native 'tpsclient'
 # REMINDER:  Remove this comment once 'tpsclient' is rewritten as a Java app
-
 %{_bindir}/tpsclient
 %{_libdir}/tps/libtps.so
 %{_libdir}/tps/libtokendb.so
@@ -1401,211 +1334,574 @@ fi
 
 %if 0%{?package_fedora_packages} || 0%{?package_rhel_packages}
 %if %{with javadoc}
-################################################################################
 %files -n pki-javadoc
-################################################################################
-
+%defattr(-,root,root,-)
 %{_javadocdir}/pki-%{version}/
 %endif
 %endif
 
 %endif # %{with server}
 
-################################################################################
 %changelog
-* Mon Oct 29 2018 Dogtag Team <pki-devel@redhat.com> 10.5.13-1
-- Require "tomcatjss >= 7.2.4-4" as a build and runtime requirement
-- dogtagpki Pagure Issue #2840 - pki cli command for Dogtag doesn't
-  prompt for a password (edewata)
-- dogtagpki Pagure Issue #2865 - X500Name.directoryStringEncodingOrder
-  overridden by CSR encoding (coverity changes) (mharmsen)
-- dogtagpki Pagure Issue #2879 - missing audit event for CS acting as
-  TLS client (cfu)
-- dogtagpki Pagure Issue #2960 - Permit certain SHA384 FIPS ciphers to be
-  enabled by default for RSA and ECC . . . (cfu)
-- dogtagpki Pagure Issue #3027 - Unsupported RSA_ ciphers should be
-  removed from the default ciphers list (cfu)
-- dogtagpki Pagure Issue #3040 - pki-ca using existing CA (edewata)
-- dogtagpki Pagure Issue #3070 - Auto shutdown when partition
-  for signed audit log is full (edewata)
-- dogtagpki Pagure Issue #3071 - Identify product version of CA, KRA,
-  OCSP, TKS, and TPS using browser (cfu, jmagne, mharmsen)
+* Mon Dec  2 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-6
+- ##########################################################################
+- # RHEL 7.8:
+- ##########################################################################
+- Bugzilla Bug #1723008 - ECC Key recovery failure with
+  CKR_TEMPLATE_INCONSISTENT (cfu)
+- Bugzilla Bug #1774282 - pki-server-nuxwdog template has pid file name with
+  non-breakable space char encoded instead of 0x20 space char (ascheel)
+- ##########################################################################
+- # RHCS 9.6:
+- ##########################################################################
+- # Bugzilla Bug #1733588 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  # pki-console to 10.5.17 in RHCS 9.6
 
-* Mon Aug 13 2018 Dogtag Team <pki-devel@redhat.com> 10.5.12-1
-- dogtagpki Pagure Issue #2481 - ECC keys not supported for signing
+* Thu Oct 24 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-5
+- ##########################################################################
+- # RHEL 7.8:
+- ##########################################################################
+- Bugzilla Bug #1523330 - CC: missing audit event for CS acting as TLS client
+  (cfu)
+- ##########################################################################
+- # RHCS 9.6:
+- ##########################################################################
+- Bugzilla Bug #1733588 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.17 in RHCS 9.6
+
+* Mon Sep 30 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-4
+- Include 'pistool' in the 'pki-tools' package
+
+* Mon Sep 23 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-3
+- ##########################################################################
+- # RHEL 7.8:
+- ##########################################################################
+- Bugzilla Bug #1445479 - KRATool does not support netkeyKeyRecovery
+  attribute (dmoluguw)
+- Bugzilla Bug #1534013 - Attempting to add new keys using a PUT KEY APDU
+  to a token that is loaded only with the default/factory keys (Key Version
+  Number 0xFF) returns an APDU with error code 0x6A88. (jmagne)
+- Bugzilla Bug #1709585 - PKI (test support) for PKCS#11 standard
+  AES KeyWrap for HSM support (cfu, ftweedal)
+- Bugzilla Bug #1748766 - number range depletion when multiple clones
+  created from same master (ftweedal)
+- ##########################################################################
+- # RHCS 9.6:
+- ##########################################################################
+- Bugzilla Bug #1520258 - TPS token search fails to find entries , LDAP filter
+  on cn and tokenUserID with wildchar too broad in some cases (rhcs-maint)
+- Bugzilla Bug #1535671 - RFE to have the users be able to use the
+  "Advanced Search" option on the TPS UI (edewata)
+
+* Mon Sep  9 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-2
+- ##########################################################################
+- # RHEL 7.8:
+- ##########################################################################
+- Bugzilla Bug #1523330 - CC: missing audit event for CS acting as TLS
+  client (cfu)
+- Bugzilla Bug #1597727 - CA - Unable to change a certificate’s revocation
+  reason from superceded to key_compromised (rhcs-maint)
+- ##########################################################################
+- # RHCS 9.6:
+- ##########################################################################
+- Bugzilla Bug #1470410 - TPS doesn't update revocation status when
+  certificate already marked as unformatted/terminated/damaged (rhcs-maint)
+- Bugzilla Bug #1470433 - Add supported transitions to TPS (rhcs-maint)
+- Bugzilla Bug #1585722 - TMS - PKISocketFactory – Modify Logging to Allow
+  External Use of class to work like CS8 (rhcs-maint)
+- Bugzilla Bug #1642577 - TPS – Revoked Encryption Certificates Marked as
+  Active in TPS Cert LDAP During Token Key Recovery (rhcs-maint)
+
+* Tue Aug 13 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-1
+- Updated jss, nuxwdog, and tomcatjss dependencies
+- ##########################################################################
+- # RHEL 7.8:
+- ##########################################################################
+- Bugzilla Bug #1733586 - Rebase pki-core from 10.5.16 to 10.5.17 (RHEL)
+- ##########################################################################
+- # RHCS 9.6:
+- ##########################################################################
+- Bugzilla Bug #1718418 - Update RHCS version of CA, KRA, OCSP, and TKS so
+  that it can be identified using a browser [RHCS]
+- Bugzilla Bug #1733588 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.17 in RHCS 9.6
+
+* Thu Jun 20 2019 Dogtag Team <pki-devel@redhat.com> 10.5.16-3
+- ##########################################################################
+- # RHEL 7.7:
+- ##########################################################################
+- Bugzilla Bug #1638379 - PKI startup initialization process should not
+  depend on LDAP operational attributes [ftweedal]
+- ##########################################################################
+- # RHCS 9.5:
+- ##########################################################################
+- Bugzilla Bug #1633423 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.16 in RHCS 9.5
+
+* Thu Apr  4 2019 Dogtag Team <pki-devel@redhat.com> 10.5.16-2
+- ##########################################################################
+- # RHEL 7.7:
+- ##########################################################################
+- Bugzilla Bug #1491453 - Need Method to Include SKI in CA Signing
+  Certificate Request [ftweedal]
+- ##########################################################################
+- # RHCS 9.5:
+- ##########################################################################
+- Bugzilla Bug #1633423 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.16 in RHCS 9.5
+
+* Mon Mar 18 2019 Dogtag Team <pki-devel@redhat.com> 10.5.16-1
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.7:
+- ##########################################################################
+- Bugzilla Bug #1633422 - Rebase pki-core from 10.5.9 to 10.5.16 (RHEL) 
+- ##########################################################################
+- # RHCS 9.5:
+- ##########################################################################
+- Bugzilla Bug #1633423 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.16 in RHCS 9.5
+
+* Fri Feb 15 2019 Dogtag Team <pki-devel@redhat.com> 10.5.9-13
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1671245 - CC: unable to verify cert before import
+  [rhel-7.6.z] [manpage] (ascheel)
+- Bugzilla Bug #1671303 - CC: Upgrade scripts for audit event names (RHEL)
+  [rhel-7.6.z] (edewata)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- # Bugzilla Bug #1671586 - CC: Upgrade scripts for audit event names (RHCS)
+  # [rhcs-9.4.z] (edewata)
+
+* Fri Feb  1 2019 Dogtag Team <pki-devel@redhat.com> 10.5.9-12
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1671245 - CC: unable to verify cert before import
+  [rhel-7.6.z] (ascheel)
+- Bugzilla Bug #1671303 - CC: Upgrade scripts for audit event names (RHEL)
+  [rhel-7.6.z] (edewata)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- # Bugzilla Bug #1671586 - CC: Upgrade scripts for audit event names (RHCS)
+  # [rhcs-9.4.z] (edewata)
+
+* Thu Jan 31 2019 Dogtag Team <pki-devel@redhat.com> 10.5.9-11
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1671245 - CC: unable to verify cert before import
+  [rhel-7.6.z] (ascheel)
+- Bugzilla Bug #1671303 - CC: Upgrade scripts for audit event names (RHEL)
+  [rhel-7.6.z] (edewata)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- # Bugzilla Bug #1671586 - CC: Upgrade scripts for audit event names (RHCS)
+  # [rhcs-9.4.z] (edewata)
+
+* Mon Dec 17 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-10
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1659939 - CC: Simplifying Web UI session timeout
+  configuration [rhel-7.6.z] (edewata)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- # Bugzilla Bug #1639836 - CC: Identify RHCS version of CA, KRA,
+  # OCSP, and TKS using browser [RHCS] (mharmsen)
+- # Added Batch Update Information to Product Version (mharmsen)
+
+* Mon Dec 10 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-9
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1657922 - CC: CA/OCSP startup fail on SystemCertsVerification
+  if enableOCSP is true [rhel-7.6.z] (jmagne)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- # Bugzilla Bug #1639836 - CC: Identify RHCS version of CA, KRA,
+  # OCSP, and TKS using browser [RHCS] (mharmsen)
+
+* Wed Dec  5 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-8
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1645262 - pkidestroy may not remove all files [rhel-7.6.z]
+  (dmoluguw)
+- Bugzilla Bug #1645263 - Auth plugins leave passwords in the access
+  log and audit log using REST [rhel-7.6.z] (dmoluguw)
+- Bugzilla Bug #1645429 - pkispawn fails due to name collision with
+  /var/log/pki/<instance> [rhel-7.6.z] (dmoluguw)
+- Bugzilla Bug #1655951 - CC: tools supporting CMC requests output
+  keyID needs to be captured in file [rhel-7.6.z] (cfu)
+- Bugzilla Bug #1656297 - Unable to install with admin-generated keys
+  [rhel-7.6.z] (edewata)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- # Bugzilla Bug #1639836 - CC: Identify RHCS version of CA, KRA,
+  # OCSP, and TKS using browser [RHCS] (mharmsen)
+
+* Mon Oct 29 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-7
+- Require "tomcatjss >= 7.2.1-8" as a build and runtime requirement
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1632116 - CC: missing audit event for CS acting as
+  TLS client [rhel-7.6.z] (cfu)
+- Bugzilla Bug #1632120 - Unsupported RSA_ ciphers should be
+  removed from the default ciphers list [rhel-7.6.z] (cfu)
+- Bugzilla Bug #1632615 - Permit certain SHA384 FIPS ciphers to be
+  enabled by default for RSA and ECC . . . [rhel-7.6.z] (cfu)
+- Bugzilla Bug #1632616 - X500Name.directoryStringEncodingOrder
+  overridden by CSR encoding (coverity changes) [rhel-7.6.z] (mharmsen)
+- Bugzilla Bug #1633104 - CMC: add config to allow non-clientAuth
+  [rhel-7.6.z] (cfu)
+- Bugzilla Bug #1636490 - Installation of CA using an existing CA fails
+  [rhel-7.6.z] (edewata)
+- Bugzilla Bug #1643878 - pki cli command for RHCS doesn't prompt for
+  a password [rhel-7.6.z] (edewata)
+- Bugzilla Bug #1643879 - CC: Identify version/release of pki-ca, pki-kra,
+  pki-ocsp, pki-tks, and pki-tps remotely [RHEL] [rhel-7.6.z] (cfu, jmagne)
+- Bugzilla Bug #1643880 - PKI subsystem process is not shutdown when
+  there is no space on the disk to write logs [rhel-7.6.z] (edewata)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- Bugzilla Bug #1639836 - CC: Identify RHCS version of CA, KRA,
+  OCSP, and TKS using browser [RHCS] (mharmsen)
+
+* Tue Aug 21 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-6
+- Updated nuxwdog dependencies
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #673182 - ECC keys not supported for signing
   audit logs (cfu)
-- dogtagpki Pagure Issue #3041 -Enable all config audit events (cfu)
-- dogtagpki Pagure Issue #3043 - consumer initialization failed.
-  Error (0) Total update succeeded (abokovoy)
-- Fixed pki console configurations that involves ldap passwords leave the
-  plain text password in signed audit logs (cfu)
-- Fixed Certificate generation happens with partial attributes in CMCRequest
-  file (cfu)
-- Fixed Better understanding of NSS_USE_DECODED_CKA_EC_POINT for ECC (cfu)
-- Fixed CMC Revocations throws exception with same reqIssuer & certissuer (cfu)
+- Bugzilla Bug #1593805 - Better understanding of
+  NSS_USE_DECODED_CKA_EC_POINT for ECC (cfu)
+- Bugzilla Bug #1601071 - Certificate generation happens with
+  partial attributes in CMCRequest file (cfu)
+- Bugzilla Bug #1601569 - CC: Enable all config audit events
+  (cfu)
+- Bugzilla Bug #1608375 - CMC Revocations throws exception
+  with same reqIssuer & certissuer (cfu)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- Bugzilla Bug #1557570 - Re-base pki-core from 10.5.1 to
+  latest upstream 10.5.x (RHCS) (mharmsen)
 
-* Thu Aug  9 2018 Dogtag Team <pki-devel@redhat.com> 10.5.11-2
-- freeipa Pagure Issue #7627 - ipa-replica-install --setup-kra broken
-  on DL0 with latest version (abokovoy)
+* Thu Aug  9 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-5
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1596629 - ipa-replica-install --setup-kra broken on DL0
+  with latest version (abokovoy)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- Bugzilla Bug #1557570 - Re-base pki-core from 10.5.1 to
+  latest upstream 10.5.x (RHCS) (mharmsen)
 
-* Tue Jul 31 2018 Dogtag Team <pki-devel@redhat.com> 10.5.11-1
-- dogtagpki Pagure Issue #2915 - keyGen fails when only Identity
+* Tue Jul 31 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-4
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1548203 - pki console configurations that involves ldap
+  passwords leave the plain text password in signed audit logs (cfu)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- Bugzilla Bug #1494591 - keyGen fails when only Identity
   certificate exists (jmagne)
 
-* Mon Jul  2 2018 Dogtag Team <pki-devel@redhat.com> 10.5.10-1
-- Updated "jss" build and runtime requirements (mharmsen)
-- Updated "tomcatjss" build and runtime requirements (mharmsen)
-- dogtagpki Pagure Issue #2865 X500Name.directoryStringEncodingOrder
-  overridden by CSR encoding (cfu)
-- dogtagpki Pagure Issue #2920 Part2 of SharedToken Audit (cfu)
-- dogtagpki Pagure Issue #2922 IPAddressName: fix construction from
-  String (ftweedal)
-- dogtagpki Pagure Issue #2959 Address pkispawn ECC profile overrides (cfu)
-- dogtagpki Pagure Issue #2992 CMC Simple request profiles and CMCResponse
-  to support simple response (cfu)
-- dogtagpki Pagure Issue #3003 AuditVerify failure due to line breaks (cfu)
-- dogtagpki Pagure Issue #3037 CMC SharedToken SubjectDN default (cfu)
+* Mon Jul 23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-3
+- Re-spin alpha builds
 
-* Fri Jun  8 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-1
-- dogtagpki Pagure Issue #2922 - Name Constraints: Using a Netmask
-  produces an odd entry in a certifcate (ftweedal)
-- dogtagpki Pagure Issue #2941 - ExternalCA: Installation failed during
+* Thu Jul  5 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-2
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1471935 - X500Name.directoryStringEncodingOrder overridden
+  by CSR encoding (cfu)
+- Bugzilla Bug #1538311 - Using a Netmask produces an odd entry in a
+  certificate (ftweedal)
+- Bugzilla Bug #1540440 - CMC: Audit Events needed for failures in
+  SharedToken scenario's (cfu)
+- Bugzilla Bug #1550742 - Address ECC profile overrides (cfu)
+- Bugzilla Bug #1562841 - servlet profileSubmitCMCSimple throws NPE (cfu)
+- Bugzilla Bug #1572432 - AuditVerify failure due to line breaks (cfu)
+- Bugzilla Bug #1592961 - Need proper default subjectDN for CMC request
+  authenticated through SharedToken (cfu)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- Bugzilla Bug #1557570 - Re-base pki-core from 10.5.1 to
+  latest upstream 10.5.x (RHCS) (mharmsen)
+
+* Mon Jun 11 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-1
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1538311 - Using a Netmask produces an odd
+  entry in a certifcate (ftweedal)
+- Bugzilla Bug #1544843 - ExternalCA: Installation failed during
   csr generation with ecc (rrelyea, gkapoor)
-- dogtagpki Pagure Issue #2999 - Cert validation for installation with
-  external CA cert (edewata)
-- dogtagpki Pagure Issue #3028 - CMC CRMF request results in
+- Bugzilla Bug #1557569 - Re-base pki-core from 10.5.1 to latest
+  upstream 10.5.x (RHEL) (mharmsen)
+- Bugzilla Bug #1580394 - CMC CRMF requests result in
   InvalidKeyFormatException when signing algorithm is ECC (cfu)
-- dogtagpki Pagure Issue #3033 - CRMFPopClient tool - should allow
+- Bugzilla Bug #1580527 - CVE-2018-1080 pki-core: Mishandled
+  ACL configuration in AAclAuthz.java reverses rules that allow
+  and deny access (ftweedal, cfu)
+- Bugzilla Bug #1585866 - CRMFPopClient tool - should allow
   option to do no key archival (cfu)
+- Bugzilla Bug #1588655 - Cert validation for installation with
+  external CA cert (edewata)
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- Bugzilla Bug #1557570 - Re-base pki-core from 10.5.1 to
+  latest upstream 10.5.x (RHCS) (mharmsen)
 
-* Wed May 23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.8-1
+* Fri Jun  8 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-13
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1553068 - Using a Netmask produces an odd
+  entry in a certifcate [rhel-7.5.z] (ftweedal)
+- Bugzilla Bug #1585945 - CMC CRMF requests result in
+  InvalidKeyFormatException when signing algorithm is ECC
+  [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1587826 - ExternalCA: Installation failed during
+  csr generation with ecc [rhel-7.5.z] (rrelyea, gkapoor)
+- Bugzilla Bug #1588944 - Cert validation for installation with
+  external CA cert [rhel-7.5.z] (edewata)
+- Bugzilla Bug #1588945 - CRMFPopClient tool - should allow
+  option to do no key archival (cfu)
+- Bugzilla Bug #1589307 - CVE-2018-1080 pki-core: Mishandled
+  ACL configuration in AAclAuthz.java reverses rules that allow
+  and deny access [rhel-7.5.z] (ftweedal, cfu)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core,
+  and pki-console to 10.5.x in RHCS 9.3
+
+* Tue May 22 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-12
 - Updated "jss" build and runtime requirements (mharmsen)
-- dogtagpki Pagure Issue #1576 - subsystem -> subsystem SSL handshake
-  issue with TLS_ECDHE_RSA_* on Thales HSM (cfu)
-- dogtagpki Pagure Issue #1741 - ECDSA Certificates Generated by
-  Certificate System fail NIST validation test with parameter field. (cfu)
-- dogtagpki Pagure Issue #2940 - [MAN] Missing Man pages for tools
-  CMCRequest, CMCResponse, CMCSharedToken (cfu)
-- dogtagpki Pagure Issue #2992 - servlet profileSubmitCMCSimple throws
-  NPE (cfu)
-- dogtagpki Pagure Issue #2995 - SAN in internal SSL server certificate in
-  pkispawn configuration step (cfu)
-- dogtagpki Pagure Issue #2996 - ECC installation for non CA subsystems
-  needs improvement (jmagne)
-- dogtagpki Pagure Issue #2997 - Token name normalization problem in
-  pki-server subsystem-cert-validate (edewata)
-- dogtagpki Pagure Issue #3018 - CMC profiles: Some CMC profiles have
-  wrong input class_id (cfu)
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1571582 - [MAN] Missing Man pages for tools CMCRequest,
+  CMCResponse, CMCSharedToken (typos) [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1572548 - IPA install with external-CA is failing when
+  FIPS mode enabled. [rhel-7.5.z] (edewata)
+- Bugzilla Bug #1574848 - servlet profileSubmitCMCSimple throws NPE
+  [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1575521 - subsystem -> subsystem SSL handshake issue
+  with TLS_ECDHE_RSA_* on Thales HSM [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1581134 - ECC installation for non CA subsystems needs
+  improvement [rhel-7.5.z] (jmagne)
+- Bugzilla Bug #1581135 - SAN in internal SSL server certificate in
+  pkispawn configuration step [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1581167 - CC: CMC profiles: Some CMC profiles have wrong
+  input class_id [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1581382 - ECDSA Certificates Generated by Certificate System
+  9.3 fail NIST validation test with parameter field. [rhel-7.5.z] (cfu)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core,
+  and pki-console to 10.5.x in RHCS 9.3
 
-* Tue Apr 10 2018 Dogtag Team <pki-devel@redhat.com> 10.5.7-2
-- dogtagpki Pagure Issue #2940 -[MAN] Missing Man pages for tools
-  CMCRequest, CMCResponse, CMCSharedToken (cfu)
-- dogtagpki Pagure Issue #2946 - libtps does not directly depend on libz
-  (build failure with nss-3.35) (ftweedal, cfu)
-- dogtagpki Pagure Issue #2950 - Need ECC-specific Enrollment Profiles
-  for standard conformance (cfu)
+* Mon Apr  9 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-11
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1554726 - Need ECC-specific Enrollment Profiles for
+  standard conformance [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1557880 - [MAN] Missing Man pages for tools
+  CMCRequest, CMCResponse, CMCSharedToken [rhel-7.5.z] (cfu)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1560233 - libtps does not directly depend on libz
+  (build failure with nss-3.35) [rhcs-9.3.z] (ftweedal)
 
-* Fri Mar 23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.7-1
-- dogtagpki Pagure Issue #2918 - Make sslget aware of TLSv1_2 ciphers
-  (cheimes, mharmsen)
-- dogtagpki Pagure Issue #2922 - Name Constraints: Using a Netmask
-  produces an odd entry in a certificate (ftweedal)
-- dogtagpki Pagure Issue #2938 - [MAN] Add --skip-configuration
-  and --skip-installation into pkispawn man page. (edewata)
-- dogtagpki Pagure Issue #2940 -[MAN] Missing Man pages for tools
-  CMCRequest, CMCResponse, CMCSharedToken (cfu)
-- dogtagpki Pagure Issue #2949 - CMCAuth throws
-  org.mozilla.jss.crypto.TokenException: Unable to insert certificate
-  into temporary database (cfu)
-- dogtagpki Pagure Issue #2950 - Need ECC-specific Enrollment Profiles
-  for standard conformance (cfu)
-- dogtagpki Pagure Issue #2952 - Permit additional FIPS ciphers to be
-  enabled by default for RSA . . . (mharmsen, cfu)
-- dogtagpki Pagure Issue #2957 - Console: Adding ACL from pki-console
-  gives StringIndexOutOfBoundsException (ftweedal)
-- dogtagpki Pagure Issue #2975 - Not able to generate certificate
-  request with ECC using pki client-cert-request (akahat)
+* Fri Mar  23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-10
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1550581 - CMCAuth throws
+  org.mozilla.jss.crypto.TokenException: Unable to insert certificate into
+  temporary database [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1551067 - [MAN] Add --skip-configuration
+  and --skip-installation into pkispawn man page. [rhel-7.5.z] (edewata)
+- Bugzilla Bug #1552241 - Make sslget aware of TLSv1_2 ciphers
+  [rhel-7.5.z] (cheimes, mharmsen)
+- Bugzilla Bug #1553068 - Using a Netmask produces an odd entry
+  in a certifcate [rhel-7.5.z] (ftweedal)
+- Bugzilla Bug #1554726 - Need ECC-specific Enrollment Profiles for
+  standard conformance [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1554727 - Permit additional FIPS ciphers to be enabled
+  by default for RSA . . . [rhel-7.5.z] (mharmsen, cfu)
+- Bugzilla Bug #1557880 - [MAN] Missing Man pages for tools
+  CMCRequest, CMCResponse, CMCSharedToken [rhel-7.5.z] (cfu)
+- Bugzilla Bug #1557883 - Console: Adding ACL from pki-console gives
+  StringIndexOutOfBoundsException [rhel-7.5.z] (ftweedal)
+- Bugzilla Bug #1558919 - Not able to generate certificate request
+  with ECC using pki client-cert-request [rhel-7.5.z] (akahat)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1560233 - libtps does not directly depend on libz
+  (build failure with nss-3.35) [rhcs-9.3.z] (ftweedal)
 
-* Wed Feb  21 2018 Dogtag Team <pki-devel@redhat.com> 10.5.6-2
-- dogtagpki Pagure Issue #2946 - libtps does not directly depend on libz
-  (build failure with nss-3.35)
+* Mon Feb  19 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-9
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- Bugzilla Bug #1445532 - CC: Audit Events: Update the default audit event
+  set (RHEL) (edewata)
+- Bugzilla Bug #1532867 - Inconsistent key ID encoding (edewata)
+- Bugzilla Bug #1540687 - CC: External OCSP Installation failure with HSM
+  and FIPS (edewata)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core,
+  and pki-console to 10.5.x in RHCS 9.3
+- Bugzilla Bug #1404075 - CC: Audit Events: Update the default audit event
+  set (RHCS) (edewata)
+- Bugzilla Bug #1546933 - Inconsistent key ID encoding (RHCS) (edewata)
 
-* Mon Feb  19 2018 Dogtag Team <pki-devel@redhat.com> 10.5.6-1
-- dogtagpki Pagure Issue #2656 - Updating list of default audit events
-  (edewata)
-- dogtagpki Pagure Issue #2884 - Inconsistent key ID encoding
-  (edewata)
-- dogtagpki Pagure Issue #2929 - Regression in lightweight CA
-  key replication (ftweedal)
-- dogtagpki Pagure Issue #2944 - External OCSP Installation failure
-  with HSM and FIPS (edewata)
+* Mon Feb 12 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-8
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- Bugzilla Bug #1542210 - pki console configurations that involves ldap
+  passwords leave the plain text password in debug logs (jmagne)
+- Bugzilla Bug #1543242 - Regression in lightweight CA key replication
+  (ftweedal)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core,
+  and pki-console to 10.5.x in RHCS 9.3
 
-* Mon Feb  5 2018 Dogtag Team <pki-devel@redhat.com> 10.5.5-1
-- dogtagpki Pagure Issue #2656 - Updating list of default audit events
-  (edewata)
-- dogtagpki Pagure Issue #2838 - Inconsistent  CERT_REQUEST_PROCESSED
-  outcomes. (edewata)
-- dogtagpki Pagure Issue #2844 - TPS CS.cfg should be reflected with the
-  changes after an in-place upgrade (jmagne)
-- dogtagpki Pagure Issue #2855 - restrict default cipher suite to those
-  ciphers permitted in fips mode (mharmsen)
-- dogtagpki Pagure Issue #2878 - Missing faillure resumption detection and
+* Mon Feb  5 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-7
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- Bugzilla Bug #1445532 - CC: Audit Events: Update the default audit event
+  set (RHEL) (edewata)
+- Bugzilla Bug #1522938 - CC: Missing faillure resumption detection and
   audit event logging at startup (jmagne)
-- dogtagpki Pagure Issue #2880 - Need to record CMC requests and responses
+- Bugzilla Bug #1523410 -  Unable to have non "pkiuser" owned CA instance
+  (alee)
+- Bugzilla Bug #1525306 - CC: missing CMC request and response record
   (cfu)
-- dogtagpki Pagure Issue #2889 - Unable to have non "pkiuser" owned CA
-  instance (alee)
-- dogtagpki Pagure Issue #2901 - Installing subsystems with external CMC
+- Bugzilla Bug #1532933 - Installing subsystems with external CMC
   certificates in HSM environment shows import error (edewata)
-- dogtagpki Pagure Issue #2909 - ProfileService: config values with
-  backslashes have backslashes removed (ftweedal)
-- dogtagpki Pagure Issue #2916 - ExternalCA: Failures when installed with
-  hsm (edewata)
-- dogtagpki Pagure Issue #2920 - CMC: Audit Events needed for failures in
-  SharedToken scenarios (cfu)
-- dogtagpki Pagure Issue #2921 - CMC: Revocation works with an unknown
+- Bugzilla Bug #1535797 - ExternalCA: Failures when installed with hsm
+  (edewata)
+- Bugzilla Bug #1539125 - restrict default cipher suite to those ciphers
+  permitted in fips mode (mharmsen)
+- Bugzilla Bug #1539198 - Inconsistent CERT_REQUEST_PROCESSED
+  outcomes. (edewata)
+- Bugzilla Bug #1540440 - CMC: Audit Events needed for failures in
+  SharedToken scenario's (cfu)
+- Bugzilla Bug #1541526 - CMC: Revocation works with an unknown
   revRequest.issuer (cfu)
+- Bugzilla Bug #1541853 - ProfileService: config values with
+  backslashes have backslashes removed (ftweedal)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core,
+  and pki-console to 10.5.x in RHCS 9.3
+- Bugzilla Bug #1404075 - CC: Audit Events: Update the default audit
+  event set (RHCS) (edewata)
+- Bugzilla Bug #1501436 - TPS CS.cfg should be reflected with the
+  changes after an in-place upgrade. (jmagne)
 
-* Tue Jan 23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.4-1
-- dogtagpki Pagure Issue #2557 -CA Cloning: Failed to update number range
-  in few cases (ftweedal)
-- dogtagpki Pagure Issue #2604 - RFE: shared token storage and retrieval
+* Tue Jan 23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-6
+- Updated jss, nuxwdog, and openssl dependencies
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- Bugzilla Bug #1402280 - CA Cloning: Failed to update number range in
+  few cases (ftweedal)
+- Bugzilla Bug #1428021 - CC: shared token storage and retrieval
   mechanism (cfu)
-- dogtagpki Pagure Issue #2661 -HAProxy rejects OCSP responses due to
-  missing nextupdate field (ftweedal)
-- dogtagpki Pagure Issue #2835 - pkidestroy does not work with nuxwdog
-  (vakwetu)
-- dogtagpki Pagure Issue #2870 - Adjust requirement for openssl to latest
-  version to include latest openssl fixes for FIPS SSL (mharmsen)
-- dogtagpki Pagure Issue #2872 -PR_FILE_NOT_FOUND_ERROR during
-  pkispawn (vakwetu)
-- dogtagpki Pagure Issue #2873 - p12 admin certificate is missing when
+- Bugzilla Bug #1447145 - CMC: cmc.popLinkWitnessRequired=false
+  would cause error (cfu)
+- Bugzilla Bug #1498957 - pkidestroy does not work with nuxwdog
+   (alee)
+- Bugzilla Bug #1520277 - PR_FILE_NOT_FOUND_ERROR during
+  pkispawn (alee)
+- Bugzilla Bug #1520526 - p12 admin certificate is missing when
   certificate is signed Externally (edewata)
-- dogtagpki Pagure Issue #2887 -Not able to setup CA with ECC (mharmsen)
-- dogtagpki Pagure Issue #2889 - Unable to have non "pkiuser" owned CA
-  instance (vakwetu)
-- dogtagpki Pagure Issue #2904 - Adjust dependencies to require the latest
-  nuxwdog (mharmsen)
-- dogtagpki Pagure Issue #2910 - pkispawn fails to mask specified parameter
-  values under the [DEFAULT] section (vakwetu)
-- dogtagpki Pagure Issue #2911 -Adjust dependencies to require the latest
-  JSS (mharmsen)
+- Bugzilla Bug #1523410 - Unable to have non "pkiuser" owned CA
+   instance (alee)
+- Bugzilla Bug #1523443 - HAProxy rejects OCSP responses due to
+  missing nextupdate field (ftweedal)
+- Bugzilla Bug #1526881 - Not able to setup CA with ECC (mharmsen)
+- Bugzilla Bug #1532759 - pkispawn seems to be leaving our passwords
+  in several different files after installation completes (alee)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core,
+  and pki-console to 10.5.x in RHCS 9.3
 
-* Mon Dec 11 2017 Dogtag Team <pki-devel@redhat.com> 10.5.3-1
-- Re-base Dogtag to 10.5.3
-- dogtagpki Pagure Issue #2735 - Secure removal of secret data storage
+* Mon Dec 11 2017 Dogtag Team <pki-devel@redhat.com> 10.5.1-5
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- Bugzilla Bug #1466066 - CC: Secure removal of secret data storage
   (jmagne)
-- dogtagpki Pagure Issue #2856 - Pylint flags seobject failures
-  (cheimes, mharmsen)
-- dogtagpki Pagure Issue #2861 -ExternalCA: Failures in ExternalCA when
-  tried to setup with CMC signed certificates (cfu)
-- dogtagpki Pagure Issue #2862 - Create a mechanism to select the
-  default NSS DB type (jmagne, mharmsen)
-- dogtagpki Pagure Issue #2874 - nuxwdog won't start on Fedora
-  (alee, mharmsen)
+- Bugzilla Bug #1518096 - ExternalCA: Failures in ExternalCA when tried to
+  setup with CMC signed certificates (cfu)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
-* Mon Nov 27 2017 Dogtag Team <pki-devel@redhat.com> 10.5.2-1
-- Re-base Dogtag to 10.5.2
+* Mon Nov 27 2017 Dogtag Team <pki-devel@redhat.com> 10.5.1-4
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
 * Tue Nov 14 2017 Troy Dawson <tdawson@redhat.com> - 10.5.1-3
 - dogtagpki Pagure Issue #2853 - Cleanup spec file conditionals
@@ -1614,394 +1910,539 @@ fi
 - Patch applying check-ins since 10.5.1-1
 
 * Thu Nov  2 2017 Dogtag Team <pki-devel@redhat.com> 10.5.1-1
-- Re-base Dogtag to 10.5.1
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
 * Thu Oct 19 2017 Dogtag Team <pki-devel@redhat.com> 10.5.0-1
-- Re-base Dogtag to 10.5.0
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
-* Mon Sep 18 2017 Dogtag Team <pki-devel@redhat.com> 10.4.8-7
-- dogtagpki Pagure Issue #2809 - PKCS #12 files incompatible with
-  NSS >= 3.31 (ftweedal)
+* Mon Sep 18 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-15
+- Bugzilla Bug #1492560 - ipa-replica-install --setup-kra broken on DL0
+  [rhel-7.4.z] (ftweedal)
 
-* Tue Sep 12 2017 Dogtag Team <pki-devel@redhat.com> 10.4.8-6
-- Require "jss >= 4.4.2-5" as a build and runtime requirement
-- dogtagpki Pagure Issue #2796 - lightweight CA replication fails with a
-  NullPointerException (ftweedal)
-- dogtagpki Pagure Issue #2788 - Missing CN in user signing cert would cause
-  error in cmc user-signed (cfu)
-- dogtagpki Pagure Issue #2789 - FixDeploymentDescriptor upgrade scriptlet can
-  fail (ftweedal)
-- dogtagpki Pagure Issue #2664 - PKCS12: upgrade to at least AES and SHA2
-  (FIPS) (ftweedal)
+* Tue Sep 12 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-14
+- Require "jss >= 4.4.0-8" as a build and runtime requirement
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Resolves: rhbz #1486870,1485833,1487509,1490241,1491332
+- Bugzilla Bug #1486870 - Lightweight CA key replication fails (regressions)
+  [RHEL 7.4.z] (ftweedal)
+- Bugzilla Bug #1485833 - Missing CN in user signing cert would cause error
+  in cmc user-signed [rhel-7.4.z] (cfu)
+- Bugzilla Bug #1487509 - pki-server-upgrade fails when upgrading from
+  RHEL 7.1 [rhel-7.4.z] (ftweedal)
+- Bugzilla Bug #1490241 - PKCS12: upgrade to at least AES and SHA2 (FIPS)
+  [rhel-7.4.z] (ftweedal)
+- Bugzilla Bug #1491332 - TPS UI: need to display tokenType and tokenOrigin
+  for token certificates on TPS UI Server [rhel-7.4.z] (edewata)
 - dogtagpki Pagure Issue #2764 - py3: pki.key.archive_encrypted_data:
   TypeError: ... is not JSON serializable (ftweedal)
-- dogtagpki Pagure Issue #2772 - TPS incorrectly assigns "tokenOrigin" and
+- ##########################################################################
+- # RHCS 9.2:
+- ##########################################################################
+- Resolves: rhbz #1486870,1485833,1487509,1490241,1491332,1482729,1462271
+- Bugzilla Bug #1462271 - TPS incorrectly assigns "tokenOrigin" and
   "tokenType" certificate attribute for recovered certificates. (cfu)
-- dogtagpki Pagure Issue #2793 - TPS UI: need to display tokenType and
-  tokenOrigin for token certificates on TPS UI (edewata)
+- Bugzilla Bug #1482729 - TPS UI: need to display tokenType and tokenOrigin
+  for token certificates on TPS UI (edewata)
 
-* Mon Aug 21 2017 Dogtag Team <pki-devel@redhat.com> 10.4.8-5
-- dogtagpki Pagure Issue #2671 - Access Banner Validation (edewata)
+* Mon Aug 21 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-13
+- Resolves: rhbz #1463350
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1463350 - Access banner validation (edewata)
+  [pki-core-server-access-banner-retrieval-validation.patch]
 
-* Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 10.4.8-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+* Wed Jul 19 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-12
+- Resolves: rhbz #1472615,1472617,1469447,1463350,1469449,1472619,1464970,1469437,1469439,1469446
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1472615 - CC: allow CA to process pre-signed CMC non-signing
+  certificate requests (cfu)
+  [PREVIOUS PATCH:  pki-core-beta.patch]
+  [PREVIOUS PATCH:  pki-core-snapshot-4.patch]
+- Bugzilla Bug #1472617 - CMC: cmc.popLinkWitnessRequired=false would cause
+  error (cfu)
+  [PREVIOUS PATCH:  pki-core-post-beta.patch]
+- Bugzilla Bug #1469447 - CC: CMC: check HTTPS client authentication cert
+  against CMC signer (cfu)
+  [PREVIOUS PATCH:  pki-core-CMC-check-HTTPS-client-authentication-cert.patch]
+- Bugzilla Bug #1463350 - Access banner validation (edewata)
+  [pki-core-server-access-banner-validation.patch]
+- Bugzilla Bug #1469449 - CC: allow CA to process pre-signed CMC renewal
+  non-signing cert requests (cfu)
+  [PREVIOUS PATCH:  pki-core-snapshot-1.patch]
+  [pki-core-pre-signed-CMC-renewal-UniqueKeyConstraint.patch]
+- Bugzilla Bug #1472619 - Platform Dependent Python Import (mharmsen)
+  [pki-core-platform-dependent-python-import.patch]
+- Bugzilla Bug #1464970 - CC: CMC: replace id-cmc-statusInfo with
+  id-cmc-statusInfoV2 (cfu)
+  [pki-core-CMC-id-cmc-statusInfoV2.patch]
+- Bugzilla Bug #1469437 - subsystem-cert-update command lacks --cert option
+  (dmoluguw)
+  [pki-core-subsystem-cert-update-CLI-cert-option.patch]
+- Bugzilla Bug #1469439 - Fix Key Changeover with HSM to support SCP03
+  (jmagne)
+  [pki-core-HSM-key-changeover-SCP03-support.patch]
+- Bugzilla Bug #1469446 - CC: need CMC enrollment profiles for system
+  certificates (cfu)
+  [pki-core-system-cert-CMC-enroll-profile.patch]
 
-* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 10.4.8-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+* Mon Jul 17 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-11
+- Resolves: rhbz #1469432
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1469432 - CMC plugin default change
+- Resolves CVE-2017-7537
+- Fixes BZ #1470948
 
-* Mon Jun 19 2017 Dogtag Team <pki-devel@redhat.com> 10.4.8-2
-- dogtagpki Pagure Issue #2721 - Key recovery using externalReg fails
-  with java null pointer exception on KRA (vakwetu)
-- dogtagpki Pagure Issue #2737 - CMC: check HTTPS client
+* Mon Jun 19 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-10
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1458043 - Key recovery on token fails with
+  invalid public key error on KRA (alee)
+- Bugzilla Bug #1460764 - CC: CMC: check HTTPS client
   authentication cert against CMC signer (cfu)
-- dogtagpki Pagure Issue #2741 - Unable to find keys in the p12 file
-  after deleting the any of the subsystem certs from it (ftweedal)
-- dogtagpki Pagure Issue #2745 - Platform Dependent Python Import (cheimes)
+- Bugzilla Bug #1461533 - Unable to find keys in the p12 file after
+  deleting the any of the subsystem certs from it (ftweedal)
 
-* Mon Jun 12 2017 Dogtag Team <pki-devel@redhat.com> 10.4.8-1
-- dogtagpki Pagure Issue #2540 - Creating symmetric key (sharedSecret)
-  using tkstool is failing when operating system is in FIPS mode. (jmagne)
-- dogtagpki Pagure Issue #2617 - Allow CA to process pre-signed CMC
+* Mon Jun 12 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-9
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1393633 - Creating symmetric key (sharedSecret)
+  using tkstool is failing when RHEL 7.3 is in FIPS mode. (jmagne)
+- Bugzilla Bug #1419756 - CC: allow CA to process pre-signed CMC
   non-signing certificate requests (cfu)
-- dogtagpki Pagure Issue #2619 - Allow CA to process pre-signed CMC
-  revocation non-signing cert requests (cfu)
-- dogtagpki Pagure Issue #2643 - Session timeout for PKI console
-  (edewata)
-- dogtagpki Pagure Issue #2719 - change the way aes clients refer to
-  aes keysets (vakwetu)
-- dogtagpki Pagure Issue #2722 - dont reuse IVs in the CMC code
-  (vakwetu)
-- dogtagpki Pagure Issue #2728 - In keywrap mode, key recovery on
+- Bugzilla Bug #1419777 - CC: allow CA to process pre-signed CMC
+   revocation non-signing cert requests (cfu)
+- Bugzilla Bug #1458047 - change the way aes clients refer to
+  aes keysets (alee)
+- Bugzilla Bug #1458055 - dont reuse IVs in the CMC code
+  (alee)
+- Bugzilla Bug #1460028 - In keywrap mode, key recovery on
   KRA with HSM causes KRA to crash (ftweedal)
 
-* Mon Jun  5 2017 Dogtag Team <pki-devel@redhat.com> 10.4.7-1
+* Mon Jun  5 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-8
 - Require "selinux-policy-targeted >= 3.13.1-159" as a runtime requirement
-- Require "tomcatjss >= 7.2.3" as a build and runtime requirement
-- dogtagpki Pagure Issue #1663 - Add SCP03 support (jmagne)
-- dogtagpki Pagure Issue #2556 - pkispawn fails to create PKI subsystem
-  on FIPS enabled system (edewata)
-- dogtagpki Pagure Issue #2674 - CA brought down during separate KRA
-  instance creation (edewata)
-- dogtagpki Pagure Issue #2676 - pkispawn fails occasionally with this
-  failure ACCESS_SESSION_ESTABLISH_FAILURE (edewata)
-- dogtagpki Pagure Issue #2687 - Upgrade script for keepAliveTimeout
-  parameter (edewata)
-- dogtagpki Pagure Issue #2707 - SubCA installation failure with 2 step
+- Require "tomcatjss >= 7.2.1-4" as a build and runtime requirement
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1400149 - pkispawn fails to create CA subsystem on FIPS
+  enabled system (edewata)
+- Bugzilla Bug #1447144 - CA brought down during separate KRA instance
+  creation (edewata)
+- Bugzilla Bug #1447762 - pkispawn fails occasionally with this failure
+  ACCESS_SESSION_ESTABLISH_FAILURE (edewata)
+- Bugzilla Bug #1454450 - SubCA installation failure with 2 step
   installation in fips enabled mode (edewata)
-- dogtagpki Pagure Issue #2713 - Build failure due to Pylint issues (cheimes)
-- dogtagpki Pagure Issue #2714 - Classpath problem while trying to run pki
-  CLI (edewata)
-- dogtagpki Pagure Issue #2717 - Certificate import using pki
-  client-cert-import is asking for password when already provided (edewata)
-- dogtagpki Pagure Issue #2721 - Key recovery using externalReg fails with
-  java null pointer exception on KRA (vakwetu)
-- dogtagpki Pagure Issue #2726 - client-cert-import --ca-cert should import
-  CA cert with trust bits "CT,C,C" (edewata)
-
-* Tue May 30 2017 Dogtag Team <pki-devel@redhat.com> 10.4.6-1
-- dogtagpki Pagure Issue #2540 - Creating symmetric key (sharedSecret)
-   using tkstool is failing when operating system is in FIPS mode. (jmagne)
-- dogtagpki Pagure Issue #2651 - Adding CRL_GENERATION audit event.
+- Bugzilla Bug #1456597 - Certificate import using pki client-cert-import
+  is asking for password when already provided (edewata)
+- Bugzilla Bug #1456940 - Build failure due to Pylint issues (cheimes)
+- Bugzilla Bug #1458043 - Key recovery using externalReg fails
+  with java null pointer exception on KRA (alee)
+- Bugzilla Bug #1458379 - Upgrade script for keepAliveTimeout parameter
   (edewata)
-- dogtagpki Pagure Issue #2660 - CA Server installation with HSM fails
+- Bugzilla Bug #1458429 - client-cert-import --ca-cert should
+  import CA cert with trust bits "CT,C,C" (edewata)
+- ##########################################################################
+- # RHCS 9.2:
+- ##########################################################################
+- Bugzilla Bug #1274086 - [RFE] Add SCP03 support (RHCS) (jmagne)
+
+* Tue May 30 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-7
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1393633 - Creating symmetric key (sharedSecret)
+  using tkstool is failing when RHEL 7.3 is in FIPS mode. (jmagne)
+- Bugzilla Bug #1445519 - CA Server installation with HSM fails
   (jmagne)
-- dogtagpki Pagure Issue #2699 - Enabling all subsystems on startup
-  (edewata)
-- dogtagpki Pagure Issue #2710 - Key recovery on token fails because
-  key record is not marked encrypted (vakwetu)
-- dogtagpki Pagure Issue #2711 - LWCA creation fails (ftweedal)
-
-* Mon May 22 2017 Dogtag Team <pki-devel@redhat.com> 10.4.5-1
-- dogtagpki Pagure Issue #2618 - Allow CA to process pre-signed CMC renewal
-  non-signing cert requests (cfu)
-- dogtagpki Pagure Issue #2641 - Ensuring common audit log correctness
-  (edewata)
-- dogtagpki Pagure Issue #2655 - Adding serial number into
-  CERT_REQUEST_PROCESSED audit event. (edewata)
-- dogtagpki Pagure Issue #2673 - allow enrollment key signed CMC with identity
-  proof (cfu)
-- dogtagpki Pagure Issue #2674 - CA brought down during separate KRA instance
-  creation (mharmsen)
-- dogtagpki Pagure Issue #2683 - exception Invalid module "--ignore-banner"
-  when defined in ~/.dogtag/pki.conf and run pki pkcs12-import --help
-  (edewata)
-- dogtagpki Pagure Issue #2684 - CA installation with HSM in FIPS mode fails
-  (jmagne)
-- dogtagpki Pagure Issue #2685 - Add "is_fips_enabled()" method to Python
-  pkispawn logic (mharmsen)
-- dogtagpki Pagure Issue #2690 - Inconsistent CERT_REQUEST_PROCESSED event in
-  ConnectorServlet. (edewata)
-- dogtagpki Pagure Issue #2693 - Incorrect audit event outcome for
-  agent-rejected cert request. (edewata)
-- dogtagpki Pagure Issue #2694 -Incorrect audit event outcome for
-  agent-canceled cert request. (edewata)
-- dogtagpki Pagure Issue #2696 - CA CS.cfg shows default port (mharmsen)
-
-* Tue May  9 2017 Dogtag Team <pki-devel@redhat.com> 10.4.4-1
-- dogtagpki Pagure Issue #1663 - Add SCP03 support (jmagne)
-- dogtagpki Pagure Issue #2522 - cannot extract generated private key from
-  KRA when HSM is used. (vakwetu)
-- dogtagpki Pagure Issue #2644 - pkispawn returns before tomcat is ready
-  (cheimes)
-- dogtagpki Pagure Issue #2665 - CAInfoService: retrieve KRA-related values
-  from the KRA (ftweedal)
-- dogtagpki Pagure Issue #2675 - CMC: cmc.popLinkWitnessRequired=false would
-  cause error (cfu)
-- dogtagpki Pagure Issue #2777 - pkispawn of clone install fails with
-  InvalidBERException (ftweedal)
-- dogtagpki Pagure Issue #2680 - kra unable to extract symmetric keys
-  generated on thales hsm (vakwetu)
-- Updated "jss" build and runtime requirements
-
-* Mon May  1 2017 Dogtag Team <pki-devel@redhat.com> 10.4.3-1
-- dogtagpki Pagure Issue #1359 - dogtag should support GSSAPI based auth in
-  conjuction with FreeIPA (ftweedal)
-- dogtagpki Pagure Issue #1408 - Key archival using AES (alee)
-- dogtagpki Pagure Issue #2520 - CA certificate profiles: the startTime
-  parameter is not working as expected. (jmagne)
-- dogtagpki Pagure Issue #2588 - profile modification cannot remove existing
-  config parameters (ftweedal)
-- dogtagpki Pagure Issue #2610 - PKCS12: upgrade to at least AES and SHA2
+- Bugzilla Bug #1452617 - Unable to create IPA Sub CA
   (ftweedal)
-- dogtagpki Pagure Issue #2617 - Allow CA to process pre-signed CMC
-  non-signing certificate requests (cfu)
-- dogtagpki Pagure Issue #2642 - Missing ClientIP and ServerIP in audit log
-  when pki CLI terminates SSL connection (edewata)
-- dogtagpki Pagure Issue #2643 - Session timeout for PKI console (edewata)
-- updated JSS dependencies
-
-* Mon Apr 17 2017 Dogtag Team <pki-devel@redhat.com> 10.4.2-1
-- dogtagpki Pagure Issue #1663 - Add SCP03 support for g&d sc 7 cards
-  (jmagne)
-- dogtagpki Pagure Issue #1722 - Installing pki-server in container reports
-  scriptlet failed, exit status 1 (mharmsen)
-- dogtagpki Pagure Issue #2556 - pkispawn fails to create PKI subsystem
-  on FIPS enabled system (edewata)
-- dogtagpki Pagure Issue #2602 -Audit logs for SSL/TLS session events
+- Bugzilla Bug #1454471 - Enabling all subsystems on startup
   (edewata)
-- dogtagpki Pagure Issue #2614 - CMC: id-cmc-popLinkWitnessV2 feature
-  implementation (cfu)
-- dogtagpki Pagure Issue #2622 - Audit log search/review (edewata)
-- dogtagpki Pagure Issue #2625 - cli authentication using expired cert
-  throws an exception (edewata)
-- dogtagpki Pagure Issue #2626 - non-CA cli looks for CA in the instance
-  during a request (edewata)
-- dogtagpki Pagure Issue #2633 - Missing python2-cryptography
-  dependency (mharmsen)
+- Bugzilla Bug #1455617 - Key recovery on token fails because
+  key record is not marked encrypted (alee)
 
-* Fri Mar 31 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-2
-- Fixed runtime typo on jss
+* Tue May 23 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-6
+- Bugzilla Bug #1454603 - Unable to install IPA server due to pkispawn error
+  (mharmsen)
+
+* Mon May 22 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-5
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1419761 - CC: allow CA to process pre-signed CMC renewal
+  non-signing cert requests (cfu)
+- Bugzilla Bug #1447080 - CC: CMC: allow enrollment key signed (self-signed)
+  CMC with identity proof (cfu)
+- Bugzilla Bug #1447144 - CA brought down during separate KRA instance
+  creation (mharmsen)
+- Bugzilla Bug #1448903 - exception Invalid module "--ignore-banner" when
+  defined in ~/.dogtag/pki.conf and run pki pkcs12-import --help (edewata)
+- Bugzilla Bug #1450143 - CA installation with HSM in FIPS mode fails (jmagne)
+- Bugzilla Bug #1452123 - CA CS.cfg shows default port (mharmsen)
+- Bugzilla Bug #1452250 - Inconsistent CERT_REQUEST_PROCESSED event in
+  ConnectorServlet. (edewata)
+- Bugzilla Bug #1452340 - Ensuring common audit log correctness (edewata)
+- Bugzilla Bug #1452344 - Adding serial number into CERT_REQUEST_PROCESSED
+  audit event. (edewata)
+
+* Tue May  9 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-4
+- ##########################################################################
+- # RHEL 7.4:
+- ##########################################################################
+- Bugzilla Bug #1386303 - cannot extract generated private key from KRA when
+  HSM is used. (alee)
+- Bugzilla Bug #1446364 - pkispawn returns before tomcat is ready (cheimes)
+- Bugzilla Bug #1447145 - CMC: cmc.popLinkWitnessRequired=false would cause
+  error (cfu)
+- Bugzilla Bug #1448203 - CAInfoService: retrieve KRA-related values from
+  the KRA (ftweedal)
+- Bugzilla Bug #1448204 - pkispawn of clone install fails with
+  InvalidBERException (ftweedal)
+- Bugzilla Bug #1448521 - kra unable to extract symmetric keys generated on
+  thales hsm (alee)
+- Updated "jss" build and runtime requirements (mharmsen)
+- ##########################################################################
+- # RHCS 9.2:
+- ##########################################################################
+- Bugzilla Bug #1274086 - [RFE] Add SCP03 support (RHCS) (jmagne)
+
+* Mon May  1 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-3
+- ############################################################################
+- # RHEL 7.4:
+- ############################################################################
+- Bugzilla Bug #1303683 - dogtag should support GSSAPI based auth in
+  conjuction with FreeIPA (ftweedal)
+- Bugzilla Bug #1385208 - RHCS 9.1 RC5 CA in the certificate profiles the
+  startTime parameter is not working as expected. (jmagne)
+- Bugzilla Bug #1419756 - CC: allow CA to process pre-signed CMC non-signing
+  certificate requests (cfu)
+- Bugzilla Bug #1426754 - PKCS12: upgrade to at least AES and SHA2 (ftweedal)
+- Bugzilla Bug #1445088 - profile modification cannot remove existing config
+  parameters (ftweedal)
+- Bugzilla Bug #1445535 - CC: Crypto Operation (AES Encryption/Decryption)
+  (RHEL) (alee)
+- Bugzilla Bug #1446874 - Missing ClientIP and ServerIP in audit log when
+  pki CLI terminates SSL connection (edewata)
+- Bugzilla Bug #1446875 - Session timeout for PKI console (RHEL) (edewata)
+- ############################################################################
+- # RHCS 9.2:
+- ############################################################################
+- Bugzilla Bug #1404480 - CC: Crypto Operation (AES Encryption/Decryption)
+  (RHCS) (alee)
+
+* Mon Apr 17 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-2
+- ############################################################################
+- # RHEL 7.4:
+- ############################################################################
+- Bugzilla Bug #1282504 - Installing pki-server in container reports
+  scriptlet failed, exit status 1 (jpazdziora)
+- Bugzilla Bug #1400149 - pkispawn fails to create CA subsystem on FIPS
+  enabled system (edewata)
+- Bugzilla Bug #1410650 - [RFE] Add SCP03 support
+  for sc 7 g & d cards (RHEL) (jmagne)
+- Bugzilla Bug #1437591 - cli authentication using expired cert throws an
+  exception (edewata)
+- Bugzilla Bug #1437602 - non-CA cli looks for CA in the instance during a
+  request (edewata)
+- ############################################################################
+- # RHCS 9.2:
+- ############################################################################
+- Bugzilla Bug #1274086 - [RFE] Add SCP03 support
+  for sc 7 g & d cards (RHCS) (jmagne)
+- ############################################################################
+- # Common Criteria
+- ############################################################################
+- Bugzilla Bug #1404080 - CC: add audit event: various SSL/TLS failures
+  (edewata)
+- Bugzilla Bug #1417307 - CC: Audit Review /Searches (edewata)
+- Bugzilla Bug #1419737 - CC: CMC: id-cmc-popLinkWitnessV2 feature
+  implementation (cfu)
 
 * Mon Mar 27 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-1
 - Require "nss >= 3.28.3" as a build and runtime requirement
-- Require "jss >= 4.4.1" as a build and runtime requirement
-- Require "tomcatjss >= 7.2.2" as a build and runtime requirement
-- ############################################################################
-- dogtagpki Pagure Issue #2541 - Re-base Dogtag pki packages to 10.4.x
-- ############################################################################
-- dogtagpki Pagure Issue #2602 - Audit logs for SSL/TLS session events
-  implementation (edewata)
-- dogtagpki Pagure Issue #2605 - CMC feature support: provided issuance
-  protection cert mechanism (cfu)
+- Require "jss >= 4.4.0-4" as a build and runtime requirement
+- Require "tomcatjss >= 7.2.1-3" as a build and runtime requirement
 - dogtagpki Pagure Issue #2612 - Unable to clone due to pki pkcs12-cert-find
   failure (edewata)
-- dogtagpki Pagure Issue #2613 - CMC: id-cmc-identityProofV2 feature
+- ############################################################################
+- Bugzilla Bug #1394309 - Rebase pki-core to 10.4.x in RHEL-7.4
+- Bugzilla Bug #1394315 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.4.x
+- ############################################################################
+- # RHEL 7.4:
+- ############################################################################
+- ############################################################################
+- # RHCS 9.2:
+- ############################################################################
+- ############################################################################
+- # Common Criteria
+- ############################################################################
+- Bugzilla Bug #1419734 - CC: CMC: id-cmc-identityProofV2 feature
   implementation (cfu)
-- dogtagpki Pagure Issue #2615 - CMC: provide Proof of Possession for
-  encryption cert requests (cfu)
+- Bugzilla Bug #1419742 - CC: CMC: provide Proof of Possession for encryption
+  cert requests (cfu)
+- Bugzilla Bug #1404080 - CC: add audit event: various SSL/TLS failures
+  (edewata)
+- Bugzilla Bug #1428020 - CC: CMC feature support: provided issuance
+  protection cert mechanism (cfu)
 
 * Tue Mar 14 2017 Dogtag Team <pki-devel@redhat.com> 10.4.0-1
 - Require "jss >= 4.4.0-1" as a build and runtime requirement
 - Require "tomcatjss >= 7.2.1-1" as a build and runtime requirement
 - ############################################################################
-- dogtagpki Pagure Issue #2541 - Re-base Dogtag pki packages to 10.4.x
+- Bugzilla Bug #1394309 - Rebase pki-core to 10.4.x in RHEL-7.4
+- Bugzilla Bug #1394315 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.4.x
 - ############################################################################
-- dogtagpki Pagure Issue #6 - Remove Policy Framework Deprecations (edewata)
-- dogtagpki Pagure Issue #850 - JSS certificate validation function does not
-  pass up exact errors from NSS (edewata)
-- dogtagpki Pagure Issue #1114 - [MAN] Generting Symmetric key fails with
-  key-generate when --usages verify is passed (vakwetu)
-- dogtagpki Pagure Issue #1247 - Better error message when try to renew a
-  certificate that expires outside renewal grace period (vakwetu)
-- dogtagpki Pagure Issue #1309 - Recovering of a revoked cert erroneously
-  reflects "active" in the token db cert entry (cfu)
-- dogtagpki Pagure Issue #1490 - add option to bypass dnsdomainname check in
-  pkispawn (vakwetu)
-- dogtagpki Pagure Issue #1517 - user-cert-add --serial CLI request to secure
-  port with remote CA shows authentication failure (edewata)
-- dogtagpki Pagure Issue #1527 - TPS Enrollment always goes to "ca1" (cfu)
-- dogtagpki Pagure Issue #1536 - CA EE: Submit caUserCert request without uid
-  does not show proper error message (vakwetu)
-- dogtagpki Pagure Issue #1663 - Add SCP03 support (jmagne)
-- dogtagpki Pagure Issue #1664 - [BUG] Add ability to disallow TPS to enroll
-  a single user on multiple tokens. (jmagne)
-- dogtagpki Pagure Issue #1710 - Add profile component that copies CN to SAN
-  (ftweedal)
-- dogtagpki Pagure Issue #1741 - ECDSA Certificates Generated by Certificate
-  System fail NIST validation test with parameter field. (cfu)
-- dogtagpki Pagure Issue #1897 - [MAN] Man page for logging configuration.
-  (edewata)
-- dogtagpki Pagure Issue #1920 - [MAN] Man page for PKCS #12 utilities
-  (edewata)
-- dogtagpki Pagure Issue #2275 - add options to enable/disable cert or crl
-  publishing. (vakwetu)
-- dogtagpki Pagure Issue #2289 - [MAN] pki ca-cert-request-submit fails
-  presumably because of missing authentication even if it should not require
-  any (edewata)
-- dogtagpki Pagure Issue #2450 - Unable to search certificate requests using
-  the latest request ID (edewata)
-- dogtagpki Pagure Issue #2453 - IPA replica-prepare failed with error
-  "Profile caIPAserviceCert Not Found" (ftweedal)
-- dogtagpki Pagure Issue #2457 - Misleading Logging for HSM (edewata)
-- dogtagpki Pagure Issue #2460 - Typo in comment line of
-  UserPwdDirAuthentication.java (edewata)
-- dogtagpki Pagure Issue #2463 - Troubleshooting improvements (edewata)
-- dogtagpki Pagure Issue #2466 - two-step externally-signed CA installation
-  fails due to missing AuthorityID (ftweedal)
-- dogtagpki Pagure Issue #2475 - Multiple host authority entries created
-  (ftweedal)
-- dogtagpki Pagure Issue #2476 - Miscellaneous Minor Changes (edewata)
-- dogtagpki Pagure Issue #2478 - pkispawn fails as it is not able to find
-  openssl as a dependency package (mharmsen)
-- dogtagpki Pagure Issue #2483 - Unable to read an encrypted email using
-  renewed tokens (jmagne)
-- dogtagpki Pagure Issue #2486 - Automatic recovery of encryption cert is not
-  working when a token is physically damaged and a temporary token is issue
-  (jmagne)
-- dogtagpki Pagure Issue #2496 -Cert/Key recovery is successful when the cert
-  serial number and key id on the ldap user mismatches (cfu)
-- dogtagpki Pagure Issue #2497 - KRA installation failed against
-  externally-signed CA with partial certificate chain (edewata)
-- dogtagpki Pagure Issue #2498 -Token format with external reg fails when
-  op.format.externalRegAddToToken.revokeCert=true (cfu)
-- dogtagpki Pagure Issue #2500 - Problems with FIPS mode (edewata)
-- dogtagpki Pagure Issue #2505 - Fix packaging duplicates of classes in
-  multiple jar files (edewata)
-- dogtagpki Pagure Issue #2510 - PIN_RESET policy is not giving expected
-  results when set on a token (jmagne)
-- dogtagpki Pagure Issue #2513 -TPS token enrollment fails to
-  setupSecureChannel when TPS and TKS security db is on fips mode. (jmagne)
-- dogtagpki Pagure Issue #2523 - Changes to target.agent.approve.list
-  parameter is not reflected in the TPS Web UI (edewata)
-- dogtagpki Pagure Issue #2524 - Remove xenroll.dll from pki-core (mharmsen)
-- dogtagpki Pagure Issue #2525 - [RFE] FreeIPA to Dogtag permission mapping
-  plugin (ftweedal)
-- dogtagpki Pagure Issue #2532 - [RFE] add express archivals and retrievals
-  from KRA (vakwetu)
-- dogtagpki Pagure Issue #2534 - Automatic recovery of encryption cert - CA
-  and TPS tokendb shows different certificate status (cfu)
-- dogtagpki Pagure Issue #2543 - Unable to install subordinate CA with HSM in
-  FIPS mode (edewata)
-- dogtagpki Pagure Issue #2544 - TPS throws "err=6" when attempting to format
-  and enroll G&D Cards (jmagne)
-- dogtagpki Pagure Issue #2552 - pkispawn does not change default ecc key size
-  from nistp256 when nistp384 is specified in spawn config (jmagne)
-- dogtagpki Pagure Issue #2556 - pkispawn fails to create PKI subsystem on
-  FIPS enabled system (edewata)
-- dogtagpki Pagure Issue #2564 - pki-tomcat for 10+ minutes before generating
-  cert (edewata)
-- dogtagpki Pagure Issue #2569 - Token memory not wiped after key deletion
-  (jmagne)
-- dogtagpki Pagure Issue #2570 - Problem with default AJP hostname in IPv6
-  environment. (edewata)
-- dogtagpki Pagure Issue #2571 - Request ID undefined for CA signing
-  certificate (vakwetu)
-- dogtagpki Pagure Issue #2573 - CA Certificate Issuance Date displayed on CA
-  website incorrect (vakwetu)
-- dogtagpki Pagure Issue #2579 - NumberFormatException in
-  LDAPProfileSubsystem (ftweedal)
-- dogtagpki Pagure Issue #2582 - Access banner (edewata)
-- dogtagpki Pagure Issue #2601 - Return revocation reason in GET
-  /ca/rest/certs/{id} response. (ftweedal)
+- # RHEL 7.4:
 - ############################################################################
-
-* Mon Mar  6 2017 Dogtag Team <pki-devel@redhat.com> 10.4.0-0.1
-- Updated version number to 10.4.0-0.1
-- NOTE: Original date was Mon Aug 8 2016
-
-* Mon Mar  6 2017 Dogtag Team <pki-devel@redhat.com> 10.3.5-13
-- PKI TRAC Ticket #1710 - Add profile component that copies CN to SAN (ftweedal)
-
-* Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 10.3.5-12
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
-
-* Tue Jan 31 2017 Dogtag Team <pki-devel@redhat.com> 10.3.5-11
-
-* Thu Dec 22 2016 Miro Hrončok <mhroncok@redhat.com> - 10.3.5-10
-- Rebuild for Python 3.6 (Fedora 26)
-
-* Tue Dec 13 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-9
-- PKI TRAC Ticket #1517 - user-cert-add --serial CLI request to secure port
+- Bugzilla Bug #1222557 - ECDSA Certificates Generated by Certificate System
+  8.1 fail NIST validation test with parameter field. (cfu)
+- Bugzilla Bug #1238684 - Generting Symmetric key fails with key-generate
+  when --usages verify (vakwetu)
+- Bugzilla Bug #1246635 - user-cert-add --serial CLI request to secure port
   with remote CA shows authentication failure (edewata)
-- PKI TRAC Ticket #1897 - [MAN] Man page for logging configuration. (edewata)
-- PKI TRAC Ticket #1920 - [MAN] Man page for PKCS #12 utilities (edewata)
-- PKI TRAC Ticket #2226 - KRA installation: NullPointerException in
-  ProxyRealm.findSecurityConstraints (edewata)
-- PKI TRAC Ticket #2289 -  [MAN] pki ca-cert-request-submit fails presumably
-  because of missing authentication even if it should not require any (edewata)
-- PKI TRAC Ticket #2523 - Changes to target.agent.approve.list parameter is
-  not reflected in the TPS Web UI [pki-base] (edewata)
-- PKI TRAC Ticket #2534 - Automatic recovery of encryption cert - CA and TPS
-  tokendb shows different certificate status (cfu)
-- PKI TRAC Ticket #2543 - Unable to install subordinate CA with HSM in FIPS
+- Bugzilla Bug #1249400 - CA EE: Submit caUserCert request without uid does
+  not show proper error message (vakwetu)
+- Bugzilla Bug #1305993 - Add profile component that copies CN to SAN
+  (ftweedal)
+- Bugzilla Bug #1316653 - pki ca-cert-request-submit fails presumably because
+  of missing authentication even if it should not require any (edewata)
+- Bugzilla Bug #1325071 - add options to enable/disable cert or crl
+  publishing. (vakwetu)
+- Bugzilla Bug #1330800 - Failed to start pki-tomcatd Service
+  ("ipa-cacert-manage renew" failed?) (edewata)
+- Bugzilla Bug #1368410 - Misleading Logging for HSM (edewata)
+- Bugzilla Bug #1372052 - Unable to search certificate requests using the
+  latest request ID (edewata)
+- Bugzilla Bug #1375347 - Typo in comment line of
+  UserPwdDirAuthentication.java (edewata)
+- Bugzilla Bug #1376226 - IPA replica-prepare failed with error
+  "Profile caIPAserviceCert Not Found" (ftweedal)
+- Bugzilla Bug #1376488 - pkispawn fails as it is not able to find openssl as
+  a dependency package (mharmsen)
+- Bugzilla Bug #1378275 - two-step externally-signed CA installation fails due
+  to missing AuthorityID (ftweedal)
+- Bugzilla Bug #1378277 - Spurious host authority entries created (ftweedal)
+- Bugzilla Bug #1378527 - Miscellaneous Minor Changes (edewata)
+- Bugzilla Bug #1381084 - KRA installation failed against externally-signed CA
+  with partial certificate chain (edewata)
+- Bugzilla Bug #1382066 - Problems with FIPS mode (edewata)
+- Bugzilla Bug #1386371 - Remove xenroll.dll from pki-core (mharmsen)
+- Bugzilla Bug #1386424 - Fix packaging duplicates of classes in multiple jar
+  files (edewata)
+- Bugzilla Bug #1391737 - Changes to target.agent.approve.list parameter is
+  not reflected in the TPS Web UI (RHEL 7) (edewata)
+- Bugzilla Bug #1392068 - [RFE] add express archivals and retrievals from KRA
+  (vakwetu)
+- Bugzilla Bug #1395817 - Unable to install subordinate CA with HSM in FIPS
   mode (edewata)
-- PKI TRAC Ticket #2544 -  TPS throws "err=6" when attempting to format and
-  enroll G&D Cards (jmagne)
-- PKI TRAC Ticket #2552 - pkispawn does not change default ecc key size from
+- Bugzilla Bug #1397200 - pkispawn does not change default ecc key size from
   nistp256 when nistp384 is specified in spawn config (jmagne)
-
-* Fri Nov  4 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-8
-- PKI TRAC Ticket #850 - JSS certificate validation function does not pass up
-  exact errors from NSS (edewata)
-  (Failed to start pki-tomcatd Service - "ipa-cacert-manage renew" failed?)
-- PKI TRAC Ticket #1247 - Better error message when try to renew a certificate
-  that expires outside renewal grace period (alee)
-- PKI TRAC Ticket #1536 - CA EE: Submit caUserCert request without uid does
-  not show proper error message (alee)
-- PKI TRAC Ticket #2460 - Typo in comment line of UserPwdDirAuthentication.java
+- Bugzilla Bug #1399862 - Dogtag 10.3.9 Man Pages (edewata)
+- Bugzilla Bug #1404881 - TPS throws "err=6" when attempting to format and
+  enroll G&D Cards (jmagne)
+- Bugzilla Bug #1405654 - Token memory not wiped after key deletion (RHEL)
+  (jmagne)
+- Bugzilla Bug #1409946 - Request ID undefined for CA signing certificate
+  (vakwetu)
+- Bugzilla Bug #1409949 - CA Certificate Issuance Date displayed on CA website
+  incorrect (vakwetu)
+- Bugzilla Bug #1410650 - [RFE] Add SCP03 support (RHEL) (jmagne)
+- Bugzilla Bug #1411428 - Unable to create a CA clone in FIPS (edewata)
+- Bugzilla Bug #1412211 - Unable to set up KRA in FIPS (edewata)
+- Bugzilla Bug #1412681 - update to 7.3 IPA with otpd bugfixes, tomcat will
+  not finish start, hangs (ftweedal)
+- Bugzilla Bug #1413132 - pki-tomcat for 10+ minutes before generating cert
   (edewata)
-- PKI TRAC Ticket #2486 - Automatic recovery of encryption cert is not working
+- Bugzilla Bug #1413136 - Problem with default AJP hostname in IPv6
+  environment. (edewata)
+- ############################################################################
+- # RHCS 9.2:
+- ############################################################################
+- Bugzilla Bug #1248553 - TPS Enrollment always goes to "ca1 (cfu)
+- Bugzilla Bug #1274086 - [RFE] Add SCP03 support (RHCS) (jmagne)
+- Bugzilla Bug #1274096 - [BUG] Add ability to disallow TPS to enroll a single
+  user on multiple tokens. (jmagne)
+- Bugzilla Bug #1379379 - Unable to read an encrypted email using renewed
+  tokens (jmagne)
+- Bugzilla Bug #1379749 - Automatic recovery of encryption cert is not working
   when a token is physically damaged and a temporary token is issued (jmagne)
-- PKI TRAC Ticket #2498 - Token format with external reg fails when
+- Bugzilla Bug #1381375 - Cert/Key recovery is successful when the cert serial
+  number and key id on the ldap user mismatches (cfu)
+- Bugzilla Bug #1381635 - Token format with external reg fails when
   op.format.externalRegAddToToken.revokeCert=true (cfu)
-- PKI TRAC Ticket #2500 - Problems with FIPS mode (edewata)
-- PKI TRAC Ticket #2500 - Problems with FIPS mode (edewata)
-  (added KRA key recovery via CLI in FIPS mode)
-- PKI TRAC Ticket #2510 - PIN_RESET policy is not giving expected results when
+- Bugzilla Bug #1382762 - PIN_RESET policy is not giving expected results when
   set on a token (jmagne)
-- PKI TRAC Ticket #2513 - TPS token enrollment fails to setupSecureChannel
-  when TPS and TKS security db is on fips mode. (jmagne)
-- Reverted patches associated with
-  PKI TRAC Ticket #2523 - Changes to target.agent.approve.list parameter is
-  not reflected in the TPS Web UI
+- Bugzilla Bug #1386257 - Changes to target.agent.approve.list parameter is
+  not reflected in the TPS Web UI (RHCS 9) (edewata)
+- Bugzilla Bug #1391207 - Automatic recovery of encryption cert - CA and TPS
+  tokendb shows different certificate status (cfu)
+- Bugzilla Bug #1395479 - TPS throws "err=6" when attempting to format and
+  enroll G&D Cards (RHCS) (jmagne)
+- Bugzilla Bug #1404900 - Dogtag 10.3.9 logging properties (edewata)
+- Bugzilla Bug #1405655 - Token memory not wiped after key deletion (RHCS)
+  (jmagne)
+- ############################################################################
 
-* Mon Oct 10 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-7
+* Mon Mar  6 2017 Dogtag Team <pki-devel@redhat.com> 10.3.3-18
+- ## RHEL 7.3.z Batch Update 4
+- Bugzilla Bug #1429492 - Add profile component that copies CN to SAN
+  (ftweedal)
+
+* Mon Jan 30 2017 Dogtag Team <pki-devel@redhat.com> 10.3.3-17
+- ## RHCS 9.1.z Batch Update 3
+- Bugzilla Bug #1391207 - Automatic recovery of encryption cert - CA and TPS
+  tokendb shows different certificate status (cfu)
+- ## RHEL 7.3.z Batch Update 3
+- Bugzilla Bug #1417063 - ECDSA Certificates Generated by Certificate System
+  8.1 fail NIST validation test with parameter field. (cfu)
+- Bugzilla Bug #1417064 - Unable to search certificate requests using the
+  latest request ID (edewata)
+- Bugzilla Bug #1417065 - CA Certificate Issuance Date displayed on CA website
+  incorrect (alee)
+- Bugzilla Bug #1417066 - update to 7.3 IPA with otpd bugfixes, tomcat will
+  not finish start, hangs (ftweedal)
+- Bugzilla Bug #1417067 - pki-tomcat for 10+ minutes before generating cert
+  (edewata)
+- Bugzilla Bug #1417190 - Problem with default AJP hostname in IPv6
+  environment. (edewata)
+
+* Thu Dec 15 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-16
+- Separate original patches into RHEL and RHCS portions
+- ## RHEL 7.3.z Batch Update 2
+- Bugzilla Bug #1404176 - logging properties and man pages (edewata)
+- Bugzilla Bug #1405328 - TPS throws "err=6" when attempting to format and
+  enroll G&D Cards (jmagne)
+- ## RHCS 9.1.z Batch Update 2
+- Bugzilla Bug #1395479 - TPS throws "err=6" when attempting to format and
+  enroll G&D Cards (jmagne)
+- Bugzilla Bug #1404900 - RHCS logging properties (edewata)
+
+* Tue Dec 13 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-15
+- ## RHEL 7.3.z Batch Update 2
+- Bugzilla Bug #1404173 - user-cert-add --serial CLI request to secure port
+  with remote CA shows authentication failure (edewata)
+- Bugzilla Bug #1404175 -  pki ca-cert-request-submit fails presumably because
+  of missing authentication even if it should not require any (edewata)
+- Bugzilla Bug #1404178 - Changes to target.agent.approve.list parameter is
+  not reflected in the TPS Web UI [pki-base] (edewata)
+- Bugzilla Bug #1404172 - Unable to install subordinate CA with HSM in FIPS
+  mode (edewata)
+- Bugzilla Bug #1403689 - pkispawn does not change default ecc key size from
+  nistp256 when nistp384 is specified in spawn config (jmagne)
+- Bugzilla Bug #1404176 - logging properties and man pages (edewata)
+- ## RHCS 9.1.z Batch Update 2
+- Bugzilla Bug #1386257 - Changes to target.agent.approve.list parameter is
+  not reflected in the TPS Web UI [pki-tps] (edewata)
+- Bugzilla Bug #1391207 - Automatic recovery of encryption cert - CA and TPS
+  tokendb shows different certificate status (cfu)
+- Bugzilla Bug #1395479 -  TPS throws "err=6" when attempting to format and
+  enroll G&D Cards (jmagne)
+
+* Tue Nov  8 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-14
+- Marked the following RHCS 9.1.z bug:
+  Bugzilla Bug #1382862 - TPS token enrollment fails to setupSecureChannel
+  when TPS and TKS security db is on fips mode. (jmagne)
+  as a duplicate of RHEL 7.3.z bug:
+  Bugzilla Bug #1389757 - Problems with FIPS mode (edewata)
+  and moved the patch from the RHCS 9.1.z bug to the RHEL 7.3.z bug.
+
+* Thu Nov  3 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-13
+- ## RHEL 7.3.z Batch Update 1
+- Bugzilla Bug #1389757 - Problems with FIPS mode (edewata)
+  (added KRA key recovery via CLI in FIPS mode)
+- ## RHCS 9.1.z Batch Update 1
+- Reverted patches associated with
+  Bugzilla Bug #1386257 - Changes to target.agent.approve.list parameter is
+  not reflected in the TPS Web UI (edewata)
+
+* Mon Oct 31 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-12
+- ## RHEL 7.3.z Batch Update 1
+- Bugzilla Bug #1390318 - CA EE: Submit caUserCert request without uid does
+  not show proper error message (alee)
+- Bugzilla Bug #1390319 - Failed to start pki-tomcatd Service
+  ("ipa-cacert-manage renew" failed?) (edewata)
+- Bugzilla Bug #1390320 - pkispawn fails as it is not able to find openssl as
+  a dependency package (mharmsen)
+- Bugzilla Bug #1390321 - two-step externally-signed CA installation fails due
+  to missing AuthorityID (ftweedal)
+- Bugzilla Bug #1390322 - Spurious host authority entries created (ftweedal)
+- Bugzilla Bug #1390324 - KRA installation failed against externally-signed CA
+  with partial certificate chain (edewata)
+- Bugzilla Bug #1389757 - Problems with FIPS mode (edewata)
+- Bugzilla Bug #1390311 - Fix packaging duplicates of classes in multiple jar
+  files (edewata)
+- Bugzilla Bug #1390325 - Typo in comment line of UserPwdDirAuthentication.java
+  (edewata)
+- ## RHCS 9.1.z Batch Update 1
+- Bugzilla Bug #1248553 - TPS Enrollment always goes to "ca1" (cfu)
+- Bugzilla Bug #1274096 -  [BUG] Add ability to disallow TPS to enroll a
+  single user on multiple tokens. (jmagne)
+- Bugzilla Bug #1379379 - Unable to read an encrypted email using renewed
+  tokens (jmagne)
+- Bugzilla Bug #1379749 - Automatic recovery of encryption cert is not working
+  when a token is physically damaged and a temporary token is issued (jmagne)
+- Bugzilla Bug #1381375 - Cert/Key recovery is successful when the cert serial
+  number and key id on the ldap user mismatches
+- Bugzilla Bug #1381635 - Token format with external reg fails when
+  op.format.externalRegAddToToken.revokeCert=true (cfu)
+- Bugzilla Bug #1382762 - PIN_RESET policy is not giving expected results when
+  set on a token (jmagne)
+- Bugzilla Bug #1382862 - TPS token enrollment fails to setupSecureChannel
+  when TPS and TKS security db is on fips mode. (jmagne)
+- Bugzilla Bug #1386257 - Changes to target.agent.approve.list parameter is
+  not reflected in the TPS Web UI (edewata)
+
+* Mon Oct 10 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-11
 - PKI TRAC Ticket #1527 - TPS Enrollment always goes to "ca1" (cfu)
 - PKI TRAC Ticket #1664 - [BUG] Add ability to disallow TPS to enroll a single
   user on multiple tokens. (jmagne)
-- PKI TRAC Ticket #2463 - Troubleshooting improvements (edewata)
-- PKI TRAC Ticket #2466 - two-step externally-signed CA installation fails due
-  to missing AuthorityID (ftweedal)
-- PKI TRAC Ticket #2475 - Multiple host authority entries created (ftweedal)
-- PKI TRAC Ticket #2476 - Dogtag 10.4.0 Miscellaneous Minor Changes
-  (edewata)
 - PKI TRAC Ticket #2478 - pkispawn fails as it is not able to find openssl as a
   dependency package (mharmsen)
 - PKI TRAC Ticket #2483 - Unable to read an encrypted email using renewed
   tokens (jmagne)
 - PKI TRAC Ticket #2496 - Cert/Key recovery is successful when the cert serial
   number and key id on the ldap user mismatches (cfu)
-- PKI TRAC Ticket #2497 - KRA installation failed against externally-signed CA
-  with partial certificate chain (edewata)
 - PKI TRAC Ticket #2505 - Fix packaging duplicates of classes in multiple jar
   files (edewata)
-- Fix for flake8 errors on Fedora 26 (cheimes)
 
-* Fri Sep  9 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-6
+* Fri Sep  9 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-10
 - Revert Patch:  PKI TRAC Ticket #2449 - Unable to create system certificates
   in different tokens (edewata)
+- Resolves:  rhbz #1374054 - ipa-replica-install fails setting up certificate
+- Restores:  rhbz #1319557 - pkispawn KRA instance is failing server
+- Removes from Errata:  rhbz #1372041 - Unable to create system certificates
+  in different tokens
 
-* Tue Sep  6 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-5
+* Tue Sep  6 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-9
 - PKI TRAC Ticket #1638 - Lightweight CAs: revoke certificate on CA deletion
   (ftweedal)
 - PKI TRAC Ticket #2436 - Dogtag 10.3.6: Miscellaneous Enhancements
@@ -2016,17 +2457,14 @@ fi
 - PKI TRAC Ticket #2449 - Unable to create system certificates in different
   tokens (edewata)
 
-* Mon Aug 29 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-4
+* Mon Aug 29 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-8
 - PKI TRAC Ticket #1578 - Authentication Instance Id PinDirEnrollment with authType value as SslclientAuth is not working (jmagne)
 - PKI TRAC TIcket #2414 - pki pkcs12-cert-del shows a successfully deleted message when a wrong nickname is provided (gkapoor)
 - PKI TRAC Ticket #2423 - pki_ca_signing_token when not specified does not fallback to pki_token_name value (edewata)
 - PKI TRAC Ticket #2436 - Dogtag 10.3.6: Miscellaneous Enhancements (akasurde) - ticket remains open
 - PKI TRAC Ticket #2439 - Outdated deployment descriptors in upgraded server(edewata)
 
-* Mon Aug 22 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-3
-- spec file changes
-
-* Mon Aug 22 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-2
+* Tue Aug 23 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-7
 - PKI TRAC Ticket #690 - [MAN] pki-tools man pages (mharmsen)
   - CMCEnroll
 - PKI TRAC Ticket #833 - pki user-mod fullName="" gives an error message
@@ -2041,19 +2479,47 @@ fi
   (edewata)
 - PKI TRAC Ticket #2440 - Optional CA signing CSR for migration (edewata)
 
-* Mon Aug  8 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-1
-- Updated version number to 10.3.5-1
+* Mon Aug 15 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-6
+- Bugzilla Bug #1366465 - Errata TPS upgrade test fails
 
-* Tue Jul 19 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-0.1
-- Updated version number to 10.3.5-0.1
-- NOTE: Original date was Tue Jul  5 2016
-
-* Tue Jul 19 2016 Dogtag Team <pki-devel@redhat.com> 10.3.4-0.1
-- Updated version number to 10.3.4-0.1
-- NOTE: Original date was Tue Jun 21 2016
-
-* Tue Jul 19 2016 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 10.3.3-4
-- https://fedoraproject.org/wiki/Changes/Automatic_Provides_for_Python_RPM_Packages
+* Mon Aug  8 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-5
+- PKI TRAC Ticket #978  - TPS connector man page: add revocation routing
+  info (cfu)
+- PKI TRAC Ticket #1285 - [MAN] Apply 'generateCRMFRequest() removed from
+  Firefox' workarounds to appropriate 'pki' man page (jmagne)
+- PKI TRAC Ticket #2246 - [MAN] Man Page: AuditVerify (cfu)
+- PKI TRAC Ticket #2381 - Throws exception while providing invalid module.
+  (edewata)
+- PKI TRAC Ticket #2383 - CLI :: pki client-cert-request --extractable
+  should accept only boolean value (edewata)
+- PKI TRAC Ticket #2389 - Installation: subsystem certs could have notAfter
+  beyond CA signing cert in case of external or existing CA (cfu)
+- PKI TRAC Ticket #2399 - Dogtag 10.3.5: Miscellaneous Enhancements
+  (akasurde, alee, cheimes, edewata, jmagne, mharmsen)
+- PKI TRAC Ticket #2401 - pkispawn calls dnsdomainname even if it does not
+  rpm-require hostname (mharmsen)
+- PKI TRAC Ticket #2402 - Conflict in file ownership in pki-base and
+  pki-server (cheimes)
+- PKI TRAC Ticket #2403 - Deployment problem with RESTEasy 3.0.17 (edewata)
+- PKI TRAC Ticket #2406 - Make starting CRL Number configurable (jmagne)
+- PKI TRAC Ticket #2412 - pki client-cert-import --trust option does not
+  apply the specified trust bits (alee)
+- PKI TRAC Ticket #2418 - [TPS] Some template substitution didn't happen
+  during installation (alee)
+- PKI TRAC Ticket #2420 - CA subsystem OSCP responder fails when LWCAs are
+  not used (ftweedal)
+- PKI TRAC Ticket #2421 - Incorrect SELinux contexts
+  Installation/Configuration (edewata)
+- PKI TRAC Ticket #2424 - ipa-ca-install fails on replica when IPA server
+  is converted from CA-less to CA-full (edewata)
+- PKI TRAC Ticket #2428 - broken request links for CA's system certs in
+  agent request viewing (cfu)
+- PKI TRAC Ticket #2430 - CA Agent certificate list is not sorted by serial
+  number in migration case (jmagne)
+- PKI TRAC Ticket #2431 - Errors noticed during ipa server upgrade.
+  (mharmsen)
+- PKI TRAC Ticket #2433 - Lightweight CA GET <id>/chain returns bogus PEM
+  data (ftweedal)
 
 * Tue Jul  5 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-3
 - PKI TRAC Ticket #691  - [MAN] pki-server man pages (mharmsen)
@@ -2350,7 +2816,7 @@ fi
 
 * Fri Aug 09 2013 Abhishek Koneru <akoneru@redhat.com> 10.1.0.0.8
 - Added pylint scan to the build process.
-
+ 
 * Mon Jul 22 2013 Endi S. Dewata <edewata@redhat.com> 10.1.0-0.7
 - Added man pages for upgrade tools.
 
@@ -2393,12 +2859,12 @@ fi
 - Change release number for official release.
 
 * Thu Apr 25 2013 Ade Lee <alee@redhat.com> 10.0.2-0.8
-- Added %pretrans script for f19
+- Added %%pretrans script for f19
 - Added java-atk-wrapper dependency
 
 * Wed Apr 24 2013 Endi S. Dewata <edewata@redhat.com> 10.0.2-0.7
 - Added pki-server-upgrade script and pki.server module.
-- Call upgrade scripts in %post for pki-base and pki-server.
+- Call upgrade scripts in %%post for pki-base and pki-server.
 
 * Tue Apr 23 2013 Endi S. Dewata <edewata@redhat.com> 10.0.2-0.6
 - Added dependency on commons-io.
@@ -2492,7 +2958,7 @@ fi
 
 * Thu Dec 6 2012 Endi S. Dewata <edewata@redhat.com> 10.0.0-0.55.b3
 - Added system-wide configuration /etc/pki/pki.conf.
-- Removed redundant lines in %files.
+- Removed redundant lines in %%files.
 
 * Tue Dec 4 2012 Endi S. Dewata <edewata@redhat.com> 10.0.0-0.54.b3
 - Moved default deployment configuration to /etc/pki.
@@ -2704,7 +3170,7 @@ fi
 
 * Mon Nov 28 2011 Endi S. Dewata <edewata@redhat.com> 9.0.16-2
 - Added JUnit tests
-
+ 
 * Fri Oct 28 2011 Matthew Harmsen <mharmsen@redhat.com> 9.0.16-1
 - 'pki-setup'
 - 'pki-symkey'
@@ -3445,7 +3911,7 @@ fi
 -     Bugzilla Bug #643206 - New CMake based build system for Dogtag
 -     Bugzilla Bug #661128 - incorrect CA ports used for revoke, unrevoke
       certs in TPS
--     Bugzilla Bug #512496 - RFE rhcs80 - crl updates and scheduling feature
+-     Bugzilla Bug #512496 - RFE rhcs80 - crl updates and scheduling feature 
 -     Bugzilla Bug #661196 - ECC(with nethsm) subca configuration fails with
       Key Type RSA Not Matched despite using ECC key pairs for rootCA & subCA.
 -     Bugzilla Bug #649343 - Publishing queue should recover from CA crash.
@@ -3503,3 +3969,4 @@ fi
 
 * Wed Dec 1 2010 Matthew Harmsen <mharmsen@redhat.com> 9.0.0-1
 - Initial revision. (kwright@redhat.com & mharmsen@redhat.com)
+

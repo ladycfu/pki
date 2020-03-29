@@ -1,22 +1,10 @@
-################################################################################
-Name:             pki-console
-################################################################################
-
-%global           vendor dogtag
-%global           brand Dogtag
-
-Summary:          Certificate System - PKI Console
-URL:              https://www.dogtagpki.org/
-License:          GPLv2
-
-BuildArch:        noarch
-
 # Optionally fetch the release from the environment variable 'PKI_RELEASE'
 %define use_pki_release %{getenv:USE_PKI_RELEASE}
 %if 0%{?use_pki_release}
 %define pki_release %{getenv:PKI_RELEASE}
 %endif
 
+Name:             pki-console
 %if 0%{?rhel}
 Version:                10.5.17
 %define redhat_release  1
@@ -28,27 +16,23 @@ Version:                10.5.17
 %define fedora_release  1
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
+#%define default_release %{fedora_release}
 %endif
 
 %if 0%{?use_pki_release}
-Release:          %{pki_release}%{?dist}
+#Release:          %{pki_release}%{?dist}
+Release:          %{pki_release}.el7pki
 %else
-Release:          %{default_release}%{?dist}
+#Release:          %{default_release}%{?dist}
+Release:          %{default_release}.el7pki
 %endif
 
-%if 0%{?rhel}
-# NOTE:  In the future, as a part of its path, this URL will contain a release
-#        directory which consists of the fixed number of the upstream release
-#        upon which this tarball was originally based.
-Source:           https://www.dogtagpki.org/pki/sources/%{name}/%{version}/%{release}/rhel/%{name}-%{version}%{?prerel}.tar.gz
-%else
-Source:           https://github.com/dogtagpki/pki/archive/v%{version}/pki-%{version}.tar.gz
-%endif
+Summary:          Certificate System - PKI Console
+URL:              http://pki.fedoraproject.org/
+License:          GPLv2
+Group:            System Environment/Base
 
-################################################################################
 # RESTEasy
-################################################################################
-
 %if 0%{?rhel} && 0%{?rhel} <= 7
 %define jaxrs_api_jar /usr/share/java/resteasy-base/jaxrs-api.jar
 %define resteasy_lib /usr/share/java/resteasy-base
@@ -56,10 +40,6 @@ Source:           https://github.com/dogtagpki/pki/archive/v%{version}/pki-%{ver
 %define jaxrs_api_jar /usr/share/java/jboss-jaxrs-2.0-api.jar
 %define resteasy_lib /usr/share/java/resteasy
 %endif
-
-################################################################################
-# PKI
-################################################################################
 
 %bcond_without    javadoc
 
@@ -71,12 +51,9 @@ Source:           https://github.com/dogtagpki/pki/archive/v%{version}/pki-%{ver
 %define pki_core_version           %{pki_core_fedora_version}
 %endif
 
-################################################################################
-# Build Dependencies
-################################################################################
+BuildArch:        noarch
 
-# autosetup
-BuildRequires:    git
+BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:    cmake >= 2.8.9-1
 BuildRequires:    idm-console-framework >= 1.1.17-4
@@ -86,7 +63,7 @@ BuildRequires:    nspr-devel
 BuildRequires:    nss-devel >= 3.28.3
 BuildRequires:    junit
 BuildRequires:    jpackage-utils >= 1.7.5-10
-BuildRequires:    jss >= 4.4.4-3
+BuildRequires:    jss >= 4.4.7-1
 BuildRequires:    pki-base-java >= %{pki_core_version}
 
 Requires:         idm-console-framework >= 1.1.17-4
@@ -95,7 +72,16 @@ Requires:         ldapjdk >= 4.19-5
 Requires:         pki-base-java >= %{pki_core_version}
 Requires:         pki-console-theme >= %{version}
 Requires:         jpackage-utils >= 1.7.5-10
-Requires:         jss >= 4.4.4-3
+Requires:         jss >= 4.4.7-1
+
+%if 0%{?rhel}
+# NOTE:  In the future, as a part of its path, this URL will contain a release
+#        directory which consists of the fixed number of the upstream release
+#        upon which this tarball was originally based.
+Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{release}/rhel/%{name}-%{version}%{?prerel}.tar.gz
+%else
+Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{release}/%{name}-%{version}%{?prerel}.tar.gz
+%endif
 
 %description
 Certificate System (CS) is an enterprise software system designed
@@ -109,18 +95,17 @@ following "Mutually-Exclusive" PKI Theme packages:
   * dogtag-pki-console-theme (Dogtag Certificate System deployments)
   * redhat-pki-console-theme (Red Hat Certificate System deployments)
 
-################################################################################
+
 %prep
-################################################################################
 
-%autosetup -n %{name}-%{version}%{?prerel} -p 1 -S git
-# With "autosetup" it's not necessary to specify the "patchX" macros.
-# See http://rpm.org/user_doc/autosetup.html.
 
-################################################################################
+%setup -q -n %{name}-%{version}%{?prerel}
+
+%clean
+%{__rm} -rf %{buildroot}
+
+
 %build
-################################################################################
-
 %{__mkdir_p} build
 cd build
 %cmake -DVERSION=%{version}-%{release} \
@@ -135,109 +120,176 @@ cd build
     ..
 %{__make} VERBOSE=1 %{?_smp_mflags}
 
-################################################################################
-%install
-################################################################################
 
+%install
+%{__rm} -rf %{buildroot}
 cd build
 %{__make} install DESTDIR=%{buildroot} INSTALL="install -p"
 
 
-################################################################################
 %files
-################################################################################
-
+%defattr(-,root,root,-)
 %doc base/console/LICENSE
 %{_bindir}/pkiconsole
-%{_javadir}/pki/pki-console.jar
+%{_javadir}/pki/
 
-################################################################################
+
 %changelog
+* Tue Aug 13 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-1
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.8:
+- ##########################################################################
+- Bugzilla Bug #1733586 - Rebase pki-core from 10.5.16 to 10.5.17 (RHEL)
+- ##########################################################################
+- # RHCS 9.6:
+- ##########################################################################
+- Bugzilla Bug #1718418 - Update RHCS version of CA, KRA, OCSP, and TKS so
+  that it can be identified using a browser [RHCS]
+- Bugzilla Bug #1733588 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.17 in RHCS 9.6
+
+* Mon Mar 18 2019 Dogtag Team <pki-devel@redhat.com> 10.5.16-1
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.7:
+- ##########################################################################
+- Bugzilla Bug #1633422 - Rebase pki-core from 10.5.9 to 10.5.16 (RHEL) 
+- ##########################################################################
+- # RHCS 9.5:
+- ##########################################################################
+- Bugzilla Bug #1633423 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.16 in RHCS 9.5
+
 * Tue Oct 16 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-1
-- Re-base Dogtag to 10.5.9
 - Require "jss >= 4.4.4-3" as a build and runtime requirement
+- ##########################################################################
+- # RHEL 7.6:
+- ##########################################################################
+- Bugzilla Bug #1557569 - Re-base pki-core from 10.5.1 to latest upstream
+  10.5.x (RHEL) 
+- ##########################################################################
+- # RHCS 9.4:
+- ##########################################################################
+- Bugzilla Bug #1557570 - Re-base pki-core from 10.5.1 to latest upstream
+  10.5.x (RHCS)
 
-* Fri Mar 23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.7-1
-- Re-base Dogtag to 10.5.7
+* Fri Mar  23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-5
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
+- Bugzilla Bug #1560230 - Console: Adding ACL from pki-console gives
+  StringIndexOutOfBoundsException [rhcs-9.3.z] (ftweedal)
 
-* Mon Feb 19 2018 Dogtag Team <pki-devel@redhat.com> 10.5.6-1
-- Re-base Dogtag to 10.5.6
+* Tue Jan 23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.1-4
+- Require "jss >= 4.4.0-11" as a build and runtime requirement
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
-* Mon Feb  5 2018 Dogtag Team <pki-devel@redhat.com> 10.5.5-1
-- Re-base Dogtag to 10.5.5
+* Mon Dec 11 2017 Dogtag Team <pki-devel@redhat.com> 10.5.1-3
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- Bugzilla Bug #1466066 - CC: Secure removal of secret data storage
+  (jmagne)
+- Bugzilla Bug #1518096 - ExternalCA: Failures in ExternalCA when tried to
+  setup with CMC signed certificates (cfu)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
-* Tue Jan 23 2018 Dogtag Team <pki-devel@redhat.com> 10.5.4-1
-- Re-base Dogtag to 10.5.4
-- Require "jss >= 4.4.2-9" as a build and runtime requirement
-
-* Mon Dec 11 2017 Dogtag Team <pki-devel@redhat.com> 10.5.3-1
-- Re-base Dogtag to 10.5.3
-- dogtagpki Pagure Issue #2862 - Create a mechanism to select the
-  default NSS DB type for console (jmagne, mharmsen)
-
-* Mon Nov 27 2017 Dogtag Team <pki-devel@redhat.com> 10.5.2-1
-- Re-base Dogtag to 10.5.2
+* Mon Nov 27 2017 Dogtag Team <pki-devel@redhat.com> 10.5.1-2
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
 * Thu Nov  2 2017 Dogtag Team <pki-devel@redhat.com> 10.5.1-1
-- Re-base Dogtag to 10.5.1
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
 * Thu Oct 19 2017 Dogtag Team <pki-devel@redhat.com> 10.5.0-1
-- Re-base Dogtag to 10.5.0
+- ##########################################################################
+- # RHEL 7.5:
+- ##########################################################################
+- Bugzilla Bug #1473452 - Rebase pki-core to latest upstream 10.5.x release
+  (RHEL)
+- ##########################################################################
+- # RHCS 9.3:
+- ##########################################################################
+- Bugzilla Bug #1471303 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.x in RHCS 9.3
 
-* Tue Sep 12 2017 Dogtag Team <pki-devel@redhat.com> 10.4.8-3
-- Require "jss >= 4.4.2-5" as a build and runtime requirement
+* Tue Sep 12 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-7
+- Require "jss >= 4.4.0-8" as a build and runtime requirement
 
-* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 10.4.8-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+* Thu Aug  3 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-6
+- Resolves: rhbz #1478134
+- Bugzilla Bug #1478134 - Access banner validation (RHCS) (edewata)
+  [pki-console-access-banner-validation.patch]
 
-* Mon Jun 19 2017 Dogtag Team <pki-devel@redhat.com> 10.4.8-1
-- Updated version number to 10.4.8-1
+* Mon Jun 12 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-5
+- Bugzilla Bug #1446877 - Session timeout for PKI console (RHCS)
+  (edewata)
 
-* Mon Jun  5 2017 Dogtag Team <pki-devel@redhat.com> 10.4.7-1
-- Updated version number to 10.4.7-1
-
-* Tue May 30 2017 Dogtag Team <pki-devel@redhat.com> 10.4.6-1
-- Updated version number to 10.4.6-1
-
-* Mon May 22 2017 Dogtag Team <pki-devel@redhat.com> 10.4.5-1
-- Updated version number to 10.4.5-1
-
-* Tue May  9 2017 Dogtag Team <pki-devel@redhat.com> 10.4.4-1
+* Tue May  9 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-4
 - Updated "jss" build and runtime requirements
 
-* Mon May  1 2017 Dogtag Team <pki-devel@redhat.com> 10.4.3-1
-- dogtagpki Pagure Issue #2643 - Session timeout for PKI console (edewata)
-- updated JSS dependencies
+* Mon May  1 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-3
+- Bugzilla Bug #1446877 - Session timeout for PKI console (RHCS) (edewata)
 
-* Mon Apr 17 2017 Dogtag Team <pki-devel@redhat.com> 10.4.2-1
+* Mon Apr 17 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-2
 - Fixed pki_console_wrapper
 
 * Wed Mar 29 2017 Dogtag Team <pki-devel@redhat.com> 10.4.1-1
-- dogtagpki Pagure Issue #2541 - Re-base Dogtag pki packages to 10.4.x
+- Require "nss >= 3.28.3" as a build and runtime requirement
+- Require "jss >= 4.4.0-4" as a build and runtime requirement
+- Bugzilla Bug #1394309 - Rebase pki-core to 10.4.x in RHEL-7.4
+- Bugzilla Bug #1394315 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.4.x
 
 * Tue Mar 14 2017 Dogtag Team <pki-devel@redhat.com> 10.4.0-1
 - Require "jss >= 4.4.0" as a build and runtime requirement
-- dogtagpki Pagure Issue #2541 - Re-base Dogtag pki packages to 10.4.x
+- Bugzilla Bug #1394309 - Rebase pki-core to 10.4.x in RHEL-7.4
+- Bugzilla Bug #1394315 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.4.x
 
-* Mon Feb 13 2017 Dogtag Team <pki-devel@redhat.com> 10.4.0-0.1
-- Updated version number to 10.4.0-0.1
-- NOTE: Original date was Mon Aug  8 2016
-
-* Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 10.3.5-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
-
-* Mon Oct 10 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-2
+* Mon Oct 10 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-2
 - PKI TRAC Ticket #2505 - Fix packaging duplicates of classes in multiple jar
   files (edewata)
-
-* Mon Aug  8 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-1
-- Updated version number to 10.3.5-1
-
-* Tue Jul  5 2016 Dogtag Team <pki-devel@redhat.com> 10.3.5-0.1
-- Updated version number to 10.3.5-0.1
-
-* Tue Jun 21 2016 Dogtag Team <pki-devel@redhat.com> 10.3.4-0.1
-- Updated version number to 10.3.4-0.1
 
 * Mon Jun 20 2016 Dogtag Team <pki-devel@redhat.com> 10.3.3-1
 - Updated release number to 10.3.3-1

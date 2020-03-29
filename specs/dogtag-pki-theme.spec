@@ -16,6 +16,7 @@ Version:                10.5.17
 %define fedora_release  1
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
+#%define default_release %{fedora_release}
 %endif
 
 %if 0%{?use_pki_release}
@@ -192,6 +193,12 @@ cd build
 
 
 %changelog
+* Tue Aug 13 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-1
+- Re-base Dogtag to 10.5.17
+
+* Mon Mar 18 2019 Dogtag Team <pki-devel@redhat.com> 10.5.16-1
+- Re-base Dogtag to 10.5.16
+
 * Tue Oct 16 2018 Dogtag Team <pki-devel@redhat.com> 10.5.9-1
 - Re-base Dogtag to 10.5.9
 
