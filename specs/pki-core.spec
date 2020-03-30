@@ -13,7 +13,7 @@
 %global package_rhel_packages 1
 # Package RHCS-specific RPMS Only
 %global package_rhcs_packages 1
-%define pki_core_rhel_version 10.5.17
+%define pki_core_rhel_version 10.5.18
 %else
 # Fedora always packages all RPMS
 %global package_fedora_packages 1
@@ -64,14 +64,14 @@
 
 Name:             pki-core
 %if 0%{?rhel}
-Version:                10.5.17
-%define redhat_release  6
+Version:                10.5.18
+%define redhat_release  1
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
-Version:                10.5.17
-%define fedora_release  6
+Version:                10.5.18
+%define fedora_release  1
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 %endif
@@ -165,7 +165,7 @@ BuildRequires:    policycoreutils-python-utils
 BuildRequires:    python-ldap
 BuildRequires:    junit
 BuildRequires:    jpackage-utils >= 0:1.7.5-10
-BuildRequires:    jss >= 4.4.7-1
+BuildRequires:    jss >= 4.4.7-3
 %if 0%{?rhel} && 0%{?rhel} <= 7
 BuildRequires:    tomcatjss >= 7.2.5-1
 %else
@@ -308,7 +308,7 @@ Group:            System Environment/Libraries
 
 Requires:         java-1.8.0-openjdk-headless
 Requires:         jpackage-utils >= 0:1.7.5-10
-Requires:         jss >= 4.4.7-1
+Requires:         jss >= 4.4.7-3
 Requires:         nss >= 3.28.3
 
 Provides:         symkey = %{version}-%{release}
@@ -387,7 +387,7 @@ Requires:         slf4j-jdk14
 %endif
 Requires:         javassist
 Requires:         jpackage-utils >= 0:1.7.5-10
-Requires:         jss >= 4.4.7-1
+Requires:         jss >= 4.4.7-3
 Requires:         ldapjdk >= 4.19-5
 Requires:         pki-base = %{version}-%{release}
 
@@ -1343,6 +1343,20 @@ fi
 %endif # %{with server}
 
 %changelog
+* Sun Mar 29 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-1
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug #1774174 - Rebase pki-core from 10.5.17 to 10.5.18 (RHEL)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1774177 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7
+- Bugzilla Bug #1774181 - Update RHCS version of CA, KRA, OCSP, and TKS so
+  that it can be identified using a browser [RHCS]
+
 * Mon Dec  2 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-6
 - ##########################################################################
 - # RHEL 7.8:

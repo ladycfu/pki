@@ -6,13 +6,13 @@
 
 Name:             pki-console
 %if 0%{?rhel}
-Version:                10.5.17
+Version:                10.5.18
 %define redhat_release  1
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
-Version:                10.5.17
+Version:                10.5.18
 %define fedora_release  1
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
@@ -44,10 +44,10 @@ Group:            System Environment/Base
 %bcond_without    javadoc
 
 %if 0%{?rhel}
-%define pki_core_rhel_version      10.5.17
+%define pki_core_rhel_version      10.5.18
 %define pki_core_version           %{pki_core_rhel_version}
 %else
-%define pki_core_fedora_version    10.5.17
+%define pki_core_fedora_version    10.5.18
 %define pki_core_version           %{pki_core_fedora_version}
 %endif
 
@@ -63,7 +63,7 @@ BuildRequires:    nspr-devel
 BuildRequires:    nss-devel >= 3.28.3
 BuildRequires:    junit
 BuildRequires:    jpackage-utils >= 1.7.5-10
-BuildRequires:    jss >= 4.4.7-1
+BuildRequires:    jss >= 4.4.7-3
 BuildRequires:    pki-base-java >= %{pki_core_version}
 
 Requires:         idm-console-framework >= 1.1.17-4
@@ -72,7 +72,7 @@ Requires:         ldapjdk >= 4.19-5
 Requires:         pki-base-java >= %{pki_core_version}
 Requires:         pki-console-theme >= %{version}
 Requires:         jpackage-utils >= 1.7.5-10
-Requires:         jss >= 4.4.7-1
+Requires:         jss >= 4.4.7-3
 
 %if 0%{?rhel}
 # NOTE:  In the future, as a part of its path, this URL will contain a release
@@ -135,6 +135,20 @@ cd build
 
 
 %changelog
+* Sun Mar 29 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-1
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug #1774174 - Rebase pki-core from 10.5.17 to 10.5.18 (RHEL)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1774177 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7
+- Bugzilla Bug #1774181 - Update RHCS version of CA, KRA, OCSP, and TKS so
+  that it can be identified using a browser [RHCS]
+
 * Tue Aug 13 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-1
 - Updated jss dependencies
 - ##########################################################################

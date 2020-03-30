@@ -6,13 +6,13 @@
 
 Name:             redhat-pki-theme
 %if 0%{?rhel}
-Version:                10.5.17
+Version:                10.5.18
 %define redhat_release  1
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
-Version:                10.5.17
+Version:                10.5.18
 %define fedora_release  1
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
@@ -199,6 +199,20 @@ cd build
 
 
 %changelog
+* Sun Mar 29 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-1
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug #1774174 - Rebase pki-core from 10.5.17 to 10.5.18 (RHEL)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1774177 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7
+- Bugzilla Bug #1774181 - Update RHCS version of CA, KRA, OCSP, and TKS so
+  that it can be identified using a browser [RHCS]
+
 * Tue Aug 13 2019 Dogtag Team <pki-devel@redhat.com> 10.5.17-1
 - ##########################################################################
 - # RHEL 7.8:
