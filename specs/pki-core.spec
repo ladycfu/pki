@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  1
+%define redhat_release  2
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  1
+%define fedora_release  2
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 %endif
@@ -205,10 +205,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{release}/%{name}-%{version}%{?prerel}.tar.gz
 %endif
 
-#Patch0:  pki-core-rhel-7-8-rhcs-9-6-alpha.patch
-#Patch1:  pki-core-rhel-7-8-rhcs-9-6-beta.patch
-#Patch2:  pki-core-Fixed-missing-audit-event.patch
-#Patch3:  pki-core-rhel-7-8-rhcs-9-6-snapshot-2.patch
+#Patch0:  pki-core-Fix-RSA-PSS-for-IPA-installer.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -803,9 +800,6 @@ This package is a part of the PKI Core used by the Certificate System.
 %setup -q -n %{name}-%{version}%{?prerel}
 
 #%patch0 -p1
-#%patch1 -p1
-#%patch2 -p1
-#%patch3 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1343,6 +1337,9 @@ fi
 %endif # %{with server}
 
 %changelog
+* Mon Mar 30 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-2
+- Bugzilla Bug #1710109 - add RSA PSS support - fix IPA installer (jmagne)
+
 * Sun Mar 29 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-1
 - Updated jss dependencies
 - ##########################################################################
