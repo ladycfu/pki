@@ -65,15 +65,16 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  2
+%define redhat_release  3
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  2
+%define fedora_release  3
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
+#%define default_release %{fedora_release}
 %endif
 
 %if 0%{?use_pki_release}
@@ -165,7 +166,7 @@ BuildRequires:    policycoreutils-python-utils
 BuildRequires:    python-ldap
 BuildRequires:    junit
 BuildRequires:    jpackage-utils >= 0:1.7.5-10
-BuildRequires:    jss >= 4.4.7-3
+BuildRequires:    jss >= 4.4.9-2
 %if 0%{?rhel} && 0%{?rhel} <= 7
 BuildRequires:    tomcatjss >= 7.2.5-1
 %else
@@ -206,6 +207,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 %endif
 
 #Patch0:  pki-core-Fix-RSA-PSS-for-IPA-installer.patch
+#Patch1:  pki-core-rhel-7-9-rhcs-9-7-beta.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -305,7 +307,7 @@ Group:            System Environment/Libraries
 
 Requires:         java-1.8.0-openjdk-headless
 Requires:         jpackage-utils >= 0:1.7.5-10
-Requires:         jss >= 4.4.7-3
+Requires:         jss >= 4.4.9-2
 Requires:         nss >= 3.28.3
 
 Provides:         symkey = %{version}-%{release}
@@ -384,7 +386,7 @@ Requires:         slf4j-jdk14
 %endif
 Requires:         javassist
 Requires:         jpackage-utils >= 0:1.7.5-10
-Requires:         jss >= 4.4.7-3
+Requires:         jss >= 4.4.9-2
 Requires:         ldapjdk >= 4.19-5
 Requires:         pki-base = %{version}-%{release}
 
@@ -800,6 +802,7 @@ This package is a part of the PKI Core used by the Certificate System.
 %setup -q -n %{name}-%{version}%{?prerel}
 
 #%patch0 -p1
+#%patch1 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1337,6 +1340,18 @@ fi
 %endif # %{with server}
 
 %changelog
+* Sun Apr 19 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-3
+- Updated jss dependencies
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug #1794213 - Server-Side keygen Enrollment for EE (cfu)
+- Bugzilla Bug #1809273 - CRL generation performs an unindexed search (jmagne)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1549307 - No default TPS Auditor group (ascheel)
+
 * Mon Mar 30 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-2
 - Bugzilla Bug #1710109 - add RSA PSS support - fix IPA installer (jmagne)
 
