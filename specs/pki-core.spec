@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  3
+%define redhat_release  4
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  3
+%define fedora_release  4
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -208,6 +208,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 
 #Patch0:  pki-core-Fix-RSA-PSS-for-IPA-installer.patch
 #Patch1:  pki-core-rhel-7-9-rhcs-9-7-beta.patch
+#Patch2:  pki-core-rhel-7-9-rhcs-9-7-post-beta.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -803,6 +804,7 @@ This package is a part of the PKI Core used by the Certificate System.
 
 #%patch0 -p1
 #%patch1 -p1
+#%patch2 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1340,6 +1342,18 @@ fi
 %endif # %{with server}
 
 %changelog
+* Tue May  5 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-4
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug #1794213 - Server-Side keygen Enrollment for EE
+  additional support and touch-up (cfu)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1710975 - TPS - Searching the certificate DB for a brand new
+  token takes too long. Bad search filter (rhcs-maint, ascheel, jmagne)
+
 * Sun Apr 19 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-3
 - Updated jss dependencies
 - ##########################################################################
