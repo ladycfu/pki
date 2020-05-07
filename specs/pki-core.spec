@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  4
+%define redhat_release  5
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  4
+%define fedora_release  5
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -166,7 +166,7 @@ BuildRequires:    policycoreutils-python-utils
 BuildRequires:    python-ldap
 BuildRequires:    junit
 BuildRequires:    jpackage-utils >= 0:1.7.5-10
-BuildRequires:    jss >= 4.4.9-2
+BuildRequires:    jss >= 4.4.9-3
 %if 0%{?rhel} && 0%{?rhel} <= 7
 BuildRequires:    tomcatjss >= 7.2.5-1
 %else
@@ -209,6 +209,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch0:  pki-core-Fix-RSA-PSS-for-IPA-installer.patch
 #Patch1:  pki-core-rhel-7-9-rhcs-9-7-beta.patch
 #Patch2:  pki-core-rhel-7-9-rhcs-9-7-post-beta.patch
+#Patch3:  pki-core-Fix-RSA-PSS-for-SHA512.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -308,7 +309,7 @@ Group:            System Environment/Libraries
 
 Requires:         java-1.8.0-openjdk-headless
 Requires:         jpackage-utils >= 0:1.7.5-10
-Requires:         jss >= 4.4.9-2
+Requires:         jss >= 4.4.9-3
 Requires:         nss >= 3.28.3
 
 Provides:         symkey = %{version}-%{release}
@@ -387,7 +388,7 @@ Requires:         slf4j-jdk14
 %endif
 Requires:         javassist
 Requires:         jpackage-utils >= 0:1.7.5-10
-Requires:         jss >= 4.4.9-2
+Requires:         jss >= 4.4.9-3
 Requires:         ldapjdk >= 4.19-5
 Requires:         pki-base = %{version}-%{release}
 
@@ -805,6 +806,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch0 -p1
 #%patch1 -p1
 #%patch2 -p1
+#%patch3 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1342,6 +1344,10 @@ fi
 %endif # %{with server}
 
 %changelog
+* Thu May  7 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-5
+- Updated jss dependencies
+- Bugzilla Bug #1710109 - add RSA PSS support - fix SHA512 (jmagne)
+
 * Tue May  5 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-4
 - ##########################################################################
 - # RHEL 7.9:

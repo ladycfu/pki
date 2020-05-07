@@ -7,13 +7,13 @@
 Name:             pki-console
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  3
+%define redhat_release  4
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  3
+%define fedora_release  4
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -63,7 +63,7 @@ BuildRequires:    nspr-devel
 BuildRequires:    nss-devel >= 3.28.3
 BuildRequires:    junit
 BuildRequires:    jpackage-utils >= 1.7.5-10
-BuildRequires:    jss >= 4.4.9-2
+BuildRequires:    jss >= 4.4.9-3
 BuildRequires:    pki-base-java >= %{pki_core_version}
 
 Requires:         idm-console-framework >= 1.1.17-4
@@ -72,7 +72,7 @@ Requires:         ldapjdk >= 4.19-5
 Requires:         pki-base-java >= %{pki_core_version}
 Requires:         pki-console-theme >= %{version}
 Requires:         jpackage-utils >= 1.7.5-10
-Requires:         jss >= 4.4.9-2
+Requires:         jss >= 4.4.9-3
 
 %if 0%{?rhel}
 # NOTE:  In the future, as a part of its path, this URL will contain a release
@@ -135,6 +135,9 @@ cd build
 
 
 %changelog
+* Thu May  7 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-4
+- Updated jss dependencies
+
 * Sun Apr 19 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-3
 - Updated jss dependencies
 
