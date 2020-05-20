@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  5
+%define redhat_release  6
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  5
+%define fedora_release  6
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -210,6 +210,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch1:  pki-core-rhel-7-9-rhcs-9-7-beta.patch
 #Patch2:  pki-core-rhel-7-9-rhcs-9-7-post-beta.patch
 #Patch3:  pki-core-Fix-RSA-PSS-for-SHA512.patch
+#Patch4:  pki-core-rhel-7-9-rhcs-9-7-post-beta-2.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -807,6 +808,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch1 -p1
 #%patch2 -p1
 #%patch3 -p1
+#%patch4 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1344,6 +1346,20 @@ fi
 %endif # %{with server}
 
 %changelog
+* Tue May 19 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-6
+- Patch for CMC Credential Error, RSA PSS typo, and new profile
+  for directory-authentication-based Server-Side keygen
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug #1710109 - add RSA PSS support (jmagne)
+- Bugzilla Bug #1794213 - Server-Side keygen Enrollment for EE (cfu)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1733588 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7
+
 * Thu May  7 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-5
 - Updated jss dependencies
 - Bugzilla Bug #1710109 - add RSA PSS support - fix SHA512 (jmagne)
