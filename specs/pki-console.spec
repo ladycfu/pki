@@ -7,13 +7,13 @@
 Name:             pki-console
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  4
+%define redhat_release  5
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  4
+%define fedora_release  5
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -83,6 +83,8 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{release}/%{name}-%{version}%{?prerel}.tar.gz
 %endif
 
+#Patch0:  pki-console-rhel-7-9-rhcs-9-7-1.patch
+
 %description
 Certificate System (CS) is an enterprise software system designed
 to manage enterprise Public Key Infrastructure (PKI) deployments.
@@ -100,6 +102,8 @@ following "Mutually-Exclusive" PKI Theme packages:
 
 
 %setup -q -n %{name}-%{version}%{?prerel}
+
+#%patch0 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -135,6 +139,10 @@ cd build
 
 
 %changelog
+* Wed Oct 14 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-5
+- Bugzilla Bug #1874157 - Not able to launch pkiconsole -- RHEL 7.9.z
+  backport request (csutherl)
+
 * Thu May  7 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-4
 - Updated jss dependencies
 
