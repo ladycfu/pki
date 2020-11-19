@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  7
+%define redhat_release  8
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  7
+%define fedora_release  8
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -212,6 +212,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch3:  pki-core-Fix-RSA-PSS-for-SHA512.patch
 #Patch4:  pki-core-rhel-7-9-rhcs-9-7-post-beta-2.patch
 #Patch5:  pki-core-Fix-CMCResponse-tool.patch
+#Patch6:  pki-core-rhel-7-9-rhcs-9-7-bu-2.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -811,6 +812,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch3 -p1
 #%patch4 -p1
 #%patch5 -p1
+#%patch6 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1348,6 +1350,23 @@ fi
 %endif # %{with server}
 
 %changelog
+* Tue Nov 17 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-8
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug #1883639 - add profile caAuditSigningCert (cfu)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1710978 - TPS - Add logging to tdbAddCertificatesForCUID if
+  adding or searching for cert record fails (jmagne)
+- Bugzilla Bug #1858860 - TPS - Update Error Codes returned to client
+  (CIW/ESC) to Match CS8. (jmagne)
+- Bugzilla Bug #1858861 - TPS - Server side key generation is not working
+  for Identity only tokens Missing some commits (cfu)
+- Bugzilla Bug #1858867 - TPS does not check token cuid on the user
+  externalReg record during PIN reset (cfu)
+
 * Wed May 27 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-7
 - Patch for CMCResponse tool
 - Bugzilla Bug #1710109 - add RSA PSS support - fix CMCResponse tool (jmagne)

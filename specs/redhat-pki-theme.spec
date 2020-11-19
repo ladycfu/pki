@@ -7,13 +7,13 @@
 Name:             redhat-pki-theme
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  3
+%define redhat_release  4
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  3
+%define fedora_release  4
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -51,6 +51,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 %endif
 
 #Patch0:  redhat-pki-theme-rhel-7-9-rhcs-9-7-1.patch
+#Patch1:  redhat-pki-theme-rhel-7-9-rhcs-9-7-bu-2.patch
 
 %global overview                                                       \
 Several PKI packages utilize a "virtual" theme component.  These       \
@@ -201,6 +202,10 @@ cd build
 
 
 %changelog
+* Tue Nov 17 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-4
+- Bugzilla Bug #1895104 - Update RHCS version of CA, KRA, OCSP, and TKS so
+  that it can be identified using a browser [RHCS 9.7.z BU 2] (mharmsen)
+
 * Wed Oct 14 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-3
 - Bugzilla Bug #1887979 - Update RHCS version of CA, KRA, OCSP, and TKS so
   that it can be identified using a browser [RHCS 9.7.z BU 1] (mharmsen)
