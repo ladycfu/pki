@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  8
+%define redhat_release  9
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  8
+%define fedora_release  9
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -213,6 +213,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch4:  pki-core-rhel-7-9-rhcs-9-7-post-beta-2.patch
 #Patch5:  pki-core-Fix-CMCResponse-tool.patch
 #Patch6:  pki-core-rhel-7-9-rhcs-9-7-bu-2.patch
+#Patch7:  pki-core-Fix-auditProfileUpgrade.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -813,6 +814,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch4 -p1
 #%patch5 -p1
 #%patch6 -p1
+#%patch7 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1350,6 +1352,10 @@ fi
 %endif # %{with server}
 
 %changelog
+* Thu Dec  3 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-9
+- Bugzilla Bug #1883639 - additional support on upgrade for audit
+  cert profile and auditProfileUpgrade + auditProfileUpgrade part 2 (cfu)
+
 * Tue Nov 17 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-8
 - ##########################################################################
 - # RHEL 7.9:
