@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  10
+%define redhat_release  11
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  10
+%define fedora_release  11
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -215,6 +215,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch6:  pki-core-rhel-7-9-rhcs-9-7-bu-2.patch
 #Patch7:  pki-core-Fix-auditProfileUpgrade.patch
 #Patch8:  pki-core-Fix-AddProfileCaAuditSigningCert.patch
+#Patch9:  pki-core-rhel-7-9-rhcs-9-7-bu-4.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -568,6 +569,13 @@ Obsoletes:        redhat-pki-console-theme < 10.3.0
 Obsoletes:        redhat-pki-server-theme < 10.3.0
 %endif
 
+Provides:         bundled(js-backbone) = 1.4.0
+Provides:         bundled(js-bootstrap) = 3.4.1
+Provides:         bundled(js-jquery) = 3.5.1
+Provides:         bundled(js-jquery-i18n-properties) = 1.2.7
+Provides:         bundled(js-patternfly) = 3.59.2
+Provides:         bundled(js-underscore) = 1.9.2
+
 %description -n   pki-server
 The PKI Server Framework is required by the following four PKI subsystems:
 
@@ -817,6 +825,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch6 -p1
 #%patch7 -p1
 #%patch8 -p1
+#%patch9 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1354,6 +1363,49 @@ fi
 %endif # %{with server}
 
 %changelog
+* Thu Feb 11 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-11
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug 1883639 - Add KRA Transport and Storage Certificates
+  profiles, audit for IPA (edewata)
+- ##########################################################################
+- # Backported CVEs (ascheel):
+- ##########################################################################
+- Bugzilla Bug 1724697 - CVE-2019-10180 pki-core: unsanitized token
+  parameters in TPS resulting in stored XSS [certificate_system_9-default]
+  (edewata, ascheel)
+- Bugzilla Bug 1725128 - CVE-2019-10178 pki-core: stored Cross-site
+  scripting (XSS) in the pki-tps web Activity tab
+  [certificate_system_9-default] (edewata, ascheel)
+- Bugzilla Bug 1791100 - CVE-2020-1696 pki-core: Stored XSS in TPS profile
+  creation [certificate_system_9-default] (edewata, ascheel)
+- Bugzilla Bug 1724688 - CVE-2019-10146 pki-core: Reflected Cross-Site
+  Scripting in 'path length' constraint field in CA's Agent page
+  [rhel-7.9.z] (dmoluguw, ascheel)
+- Bugzilla Bug 1789843 - CVE-2019-10221 pki-core: reflected cross site
+  scripting in getcookies?url= endpoint in CA [rhel-7.9.z]
+  (dmoluguw, ascheel)
+- Bugzilla Bug 1724713 - CVE-2019-10179 pki-core: pki-core/pki-kra:
+  Reflected XSS in recoveryID search field at KRA's DRM agent page in
+  authorize recovery tab [rhel-7.9.z] (ascheel)
+- Bugzilla Bug 1798011 - CVE-2020-1721 pki-core: KRA vulnerable to
+  reflected XSS via the getPk12 page [rhel-7.9.z] (ascheel,jmagne)
+- ##########################################################################
+- Update to jquery v3.4.1 (ascheel)
+- Update to jquery-i18n-properties v1.2.7 (ascheel)
+- Update to backbone v1.4.0 (ascheel)
+- Upgrade to underscore v1.9.2 (ascheel)
+- Update to patternfly v3.59.3 (ascheel)
+- Update to jQuery v3.5.1 (ascheel)
+- Upgrade to bootstrap v3.4.1 (ascheel)
+- Link in new Bootstrap CSS file (ascheel)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1733588 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7
+
 * Fri Dec  4 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-10
 - Bugzilla Bug #1883639 - additional fix to upgrade script (edewata)
 

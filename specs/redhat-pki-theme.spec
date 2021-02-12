@@ -7,13 +7,13 @@
 Name:             redhat-pki-theme
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  4
+%define redhat_release  5
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  4
+%define fedora_release  5
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -52,6 +52,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 
 #Patch0:  redhat-pki-theme-rhel-7-9-rhcs-9-7-1.patch
 #Patch1:  redhat-pki-theme-rhel-7-9-rhcs-9-7-bu-2.patch
+#Patch2:  redhat-pki-theme-rhel-7-9-rhcs-9-7-bu-4.patch
 
 %global overview                                                       \
 Several PKI packages utilize a "virtual" theme component.  These       \
@@ -202,6 +203,13 @@ cd build
 
 
 %changelog
+* Thu Feb 11 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-5
+- Bugzilla Bug #1914474 - Update RHCS version of CA, KRA, OCSP, and TKS so
+  that it can be identified using a browser [RHCS 9.7.z BU 4] (mharmsen)
+- Update patternfly.css in Red Hat theme (ascheel, mharmsen)
+- Update Patternfly fonts in Red Hat theme (ascheel, mharmsen)
+- Add separate bootstrap CSS file in Red Hat theme (ascheel, mharmsen)
+
 * Tue Nov 17 2020 Dogtag Team <pki-devel@redhat.com> 10.5.18-4
 - Bugzilla Bug #1895104 - Update RHCS version of CA, KRA, OCSP, and TKS so
   that it can be identified using a browser [RHCS 9.7.z BU 2] (mharmsen)
