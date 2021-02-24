@@ -1367,6 +1367,47 @@ fi
 %changelog
 * Wed Feb 24 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-12
 - Change variable 'TPS' to 'tps'
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug 1883639 - Add KRA Transport and Storage Certificates
+  profiles, audit for IPA (edewata)
+- ##########################################################################
+- # Backported CVEs (ascheel):
+- ##########################################################################
+- Bugzilla Bug 1724697 - CVE-2019-10180 pki-core: unsanitized token
+  parameters in TPS resulting in stored XSS [certificate_system_9-default]
+  (edewata, ascheel)
+- Bugzilla Bug 1725128 - CVE-2019-10178 pki-core: stored Cross-site
+  scripting (XSS) in the pki-tps web Activity tab
+  [certificate_system_9-default] (edewata, ascheel)
+- Bugzilla Bug 1791100 - CVE-2020-1696 pki-core: Stored XSS in TPS profile
+  creation [certificate_system_9-default] (edewata, ascheel)
+- Bugzilla Bug 1724688 - CVE-2019-10146 pki-core: Reflected Cross-Site
+  Scripting in 'path length' constraint field in CA's Agent page
+  [rhel-7.9.z] (dmoluguw, ascheel)
+- Bugzilla Bug 1789843 - CVE-2019-10221 pki-core: reflected cross site
+  scripting in getcookies?url= endpoint in CA [rhel-7.9.z]
+  (dmoluguw, ascheel)
+- Bugzilla Bug 1724713 - CVE-2019-10179 pki-core: pki-core/pki-kra:
+  Reflected XSS in recoveryID search field at KRA's DRM agent page in
+  authorize recovery tab [rhel-7.9.z] (ascheel)
+- Bugzilla Bug 1798011 - CVE-2020-1721 pki-core: KRA vulnerable to
+  reflected XSS via the getPk12 page [rhel-7.9.z] (ascheel,jmagne)
+- ##########################################################################
+- Update to jquery v3.4.1 (ascheel)
+- Update to jquery-i18n-properties v1.2.7 (ascheel)
+- Update to backbone v1.4.0 (ascheel)
+- Upgrade to underscore v1.9.2 (ascheel)
+- Update to patternfly v3.59.3 (ascheel)
+- Update to jQuery v3.5.1 (ascheel)
+- Upgrade to bootstrap v3.4.1 (ascheel)
+- Link in new Bootstrap CSS file (ascheel)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1733588 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7
 
 * Thu Feb 11 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-11
 - ##########################################################################
