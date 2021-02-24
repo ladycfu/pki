@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  11
+%define redhat_release  12
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  11
+%define fedora_release  12
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -216,6 +216,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch7:  pki-core-Fix-auditProfileUpgrade.patch
 #Patch8:  pki-core-Fix-AddProfileCaAuditSigningCert.patch
 #Patch9:  pki-core-rhel-7-9-rhcs-9-7-bu-4.patch
+#Patch10: pki-core-Change-var-TPS-to-tps.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -826,6 +827,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch7 -p1
 #%patch8 -p1
 #%patch9 -p1
+#%patch10 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1363,6 +1365,9 @@ fi
 %endif # %{with server}
 
 %changelog
+* Wed Feb 24 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-12
+- Change variable 'TPS' to 'tps'
+
 * Thu Feb 11 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-11
 - ##########################################################################
 - # RHEL 7.9:
