@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  12
+%define redhat_release  13
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  12
+%define fedora_release  13
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -217,6 +217,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch8:  pki-core-Fix-AddProfileCaAuditSigningCert.patch
 #Patch9:  pki-core-rhel-7-9-rhcs-9-7-bu-4.patch
 #Patch10: pki-core-Change-var-TPS-to-tps.patch
+#Patch11: pki-core-rhel-7-9-rhcs-9-7-bu-6.0.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -828,6 +829,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch8 -p1
 #%patch9 -p1
 #%patch10 -p1
+#%patch11 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1365,6 +1367,20 @@ fi
 %endif # %{with server}
 
 %changelog
+* Thu Apr 22 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-13
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug 1949136 - PKI instance creation failed with new 389-ds-base
+  build (jmagne)
+- Bugzilla Bug 1949656 - CRMF requests with extensions other than SKID cannot
+  be processed (cfu)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1774177 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7 (Batch Update 6)
+
 * Wed Feb 24 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-12
 - Change variable 'TPS' to 'tps'
 - ##########################################################################
