@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  13
+%define redhat_release  14
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  13
+%define fedora_release  14
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -218,6 +218,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch9:  pki-core-rhel-7-9-rhcs-9-7-bu-4.patch
 #Patch10: pki-core-Change-var-TPS-to-tps.patch
 #Patch11: pki-core-rhel-7-9-rhcs-9-7-bu-6.0.patch
+#Patch12: pki-core-rhel-7-9-rhcs-9-7-bu-6.1.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -830,6 +831,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch9 -p1
 #%patch10 -p1
 #%patch11 -p1
+#%patch12 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1367,6 +1369,24 @@ fi
 %endif # %{with server}
 
 %changelog
+* Thu May 13 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-14
+- ##########################################################################
+- # RHEL 7.9:
+- ##########################################################################
+- Bugzilla Bug 1911472 - Revoke via REST API not working when Agent
+  certificate not issued by CA [rhel-7.9.z] (cfu)
+- Bugzilla Bug 1914587 - RHEL IPA PKI - Failed to read product version
+  String.java.io.FileNotFoundException (ckelley)
+- Bugzilla Bug 1942687 - TPS not populating Token Policy, or switching
+  PIN_RESET=YES to NO [rhel-7.9.z] (jmagne)
+- Bugzilla Bug 1955633 - Recovery of Keys migrated to latest version of KRA
+  fail to recover and result in Null Point Exception [rhel-7.9.z] (jmagne)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1774177 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7 (Batch Update 6)
+
 * Thu Apr 22 2021 Dogtag Team <pki-devel@redhat.com> 10.5.18-13
 - ##########################################################################
 - # RHEL 7.9:
