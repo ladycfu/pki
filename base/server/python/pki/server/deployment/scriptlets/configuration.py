@@ -373,14 +373,18 @@ class PkiScriptlet(pkiscriptlet.AbstractBasePkiScriptlet):
         cert_id = self.get_cert_id(subsystem, tag)
         nickname = deployer.mdict['pki_%s_nickname' % cert_id]
         cert_data = nssdb.get_cert(
-            nickname=nickname)
+            nickname=nickname, output_text=True)
 
         if not cert_data:
             return
 
         logger.info('Validating %s certificate', tag)
 
+        print ("cert_data= " + cert_data)
+
         subsystem.validate_system_cert(tag)
+
+        nssdb.show_certs()
 
     def validate_system_certs(self, deployer, nssdb, subsystem):
 
