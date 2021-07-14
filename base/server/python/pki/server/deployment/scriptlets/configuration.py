@@ -821,6 +821,8 @@ class PkiScriptlet(pkiscriptlet.AbstractBasePkiScriptlet):
             "validating %s certificate", tag,
             extra=config.PKI_INDENTATION_LEVEL_2)
 
+        print "validate_system_cert on: " +tag + "; cert_data= " + cert_data
+
         subsystem.validate_system_cert(tag)
 
     def validate_system_certs(self, deployer, nssdb, subsystem):
