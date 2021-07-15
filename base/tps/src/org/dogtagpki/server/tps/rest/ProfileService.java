@@ -22,8 +22,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -39,12 +42,16 @@ import com.netscape.certsrv.apps.CMS;
 import com.netscape.certsrv.base.BadRequestException;
 import com.netscape.certsrv.base.ForbiddenException;
 import com.netscape.certsrv.base.PKIException;
+import com.netscape.certsrv.base.UserNotFoundException;
 import com.netscape.certsrv.common.Constants;
 import com.netscape.certsrv.logging.AuditEvent;
 import com.netscape.certsrv.logging.ILogger;
 import com.netscape.certsrv.tps.profile.ProfileCollection;
 import com.netscape.certsrv.tps.profile.ProfileData;
 import com.netscape.certsrv.tps.profile.ProfileResource;
+import com.netscape.certsrv.usrgrp.IUGSubsystem;
+import com.netscape.certsrv.usrgrp.IUser;
+import com.netscape.certsrv.user.UserResource;
 import com.netscape.cms.servlet.base.SubsystemService;
 
 /**
@@ -93,15 +100,45 @@ public class ProfileService extends SubsystemService implements ProfileResource 
         if (filter != null && filter.length() < MIN_FILTER_LENGTH) {
             throw new BadRequestException("Filter is too short.");
         }
-
-        start = start == null ? 0 : start;
-        size = size == null ? DEFAULT_SIZE : size;
-
+	//cfu
+        CMS.debug("ProfileService.j.findProfiles filter: " + filter);
+        CMS.debug("ProfileService.j.findProfiles principal name: " +
+			servletRequest.getUserPrincipal().getName());
         try {
+            String userID = servletRequest.getUserPrincipal().getName();
+            IUGSubsystem userGroupManager = (IUGSubsystem) CMS.getSubsystem(CMS.SUBSYSTEM_UG);
+            IUser user = userGroupManager.getUser(userID);
+            if (user == null) {
+                throw new UserNotFoundException(userID);
+            }
+            CMS.debug("ProfileService.j.findProfiles getting list of authorized profiles");
+            List<String> authorizedProfiles = user.getTpsProfiles();
+
+            start = start == null ? 0 : start;
+            size = size == null ? DEFAULT_SIZE : size;
+
             TPSSubsystem subsystem = (TPSSubsystem) CMS.getSubsystem(TPSSubsystem.ID);
             ProfileDatabase database = subsystem.getProfileDatabase();
 
-            Iterator<ProfileRecord> profiles = database.findRecords(filter).iterator();
+            Iterator<ProfileRecord> profiles = null;
+	    Collection<ProfileRecord> profilesCol = new ArrayList<ProfileRecord>();
+	    if (authorizedProfiles != null) {
+                for (String profile: authorizedProfiles) {
+                    if (profile.equals(UserResource.ALL_PROFILES)) {
+                        CMS.debug("ProfileService.j.findProfiles profile a: " + profile);
+                        profiles = database.findRecords(filter).iterator();
+			break;
+		    } else {
+                        CMS.debug("ProfileService.j.findProfiles profile b: " + profile);
+                        ProfileRecord profileRecord = database.getRecord(profile);
+		        profilesCol.add(profileRecord);
+		    }
+	        }
+	    } else {
+                CMS.debug("ProfileService.j.findProfiles authorized profiles is null");
+            }
+	    if (profiles == null)
+	        profiles = profilesCol.iterator();
 
             ProfileCollection response = new ProfileCollection();
             int i = 0;

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -43,6 +44,8 @@ import com.netscape.certsrv.apps.CMS;
 import com.netscape.certsrv.base.BadRequestException;
 import com.netscape.certsrv.base.IConfigStore;
 import com.netscape.certsrv.base.PKIException;
+import com.netscape.certsrv.usrgrp.IUGSubsystem;
+import com.netscape.certsrv.usrgrp.IUser;
 import com.netscape.certsrv.dbs.EDBException;
 import com.netscape.certsrv.dbs.IDBVirtualList;
 import com.netscape.certsrv.ldap.LDAPExceptionConverter;
@@ -310,10 +313,16 @@ public class TokenService extends SubsystemService implements TokenResource {
             Integer start,
             Integer size,
             TokenCollection response) throws Exception {
-
+//cfu here
         // search with VLV sorted by date in reverse order
         IDBVirtualList<TokenRecord> list = database.findRecords(
                 null, null, new String[] { "-modifyTimestamp", "-createTimestamp" }, size);
+
+        String userID = servletRequest.getUserPrincipal().getName();
+        CMS.debug("TokenService: principal name: " + userID);
+        IUGSubsystem userGroupManager = (IUGSubsystem) CMS.getSubsystem(CMS.SUBSYSTEM_UG);
+        IUser user = userGroupManager.getUser(userID);
+        List<String> authorizedProfiles = user.getTpsProfiles();
 
         int total = list.getSize();
 
@@ -326,7 +335,14 @@ public class TokenService extends SubsystemService implements TokenResource {
                 throw new PKIException("Token record not found");
             }
 
-            response.addEntry(createTokenData(record));
+            CMS.debug("TokenService.retrieveTokensWithVLV: record.tokenType="+
+ 		    record.getType());
+            if (authorizedProfiles.contains(record.getType())) {
+                CMS.debug("TokenService: token type allowed");
+                response.addEntry(createTokenData(record));
+	    } else {
+                CMS.debug("TokenService: token type not allowed");
+	    }
         }
 
         response.setTotal(total);
@@ -340,6 +356,7 @@ public class TokenService extends SubsystemService implements TokenResource {
             Integer size,
             TokenCollection response) throws Exception {
 
+//and cfu here
         // search without VLV
         Iterator<TokenRecord> tokens = database.findRecords(filter, attributes).iterator();
 
@@ -355,6 +372,12 @@ public class TokenService extends SubsystemService implements TokenResource {
         for (; i < start + size && tokens.hasNext(); i++) {
             TokenRecord record = tokens.next();
 
+            if (record == null) {
+                CMS.debug("TokenService: Token record not found");
+                throw new PKIException("Token record not found");
+            }
+            CMS.debug("TokenService.retrieveTokensWithoutVLV: record.tokenType="+
+			    record.getType());
             response.addEntry(createTokenData(record));
         }
 
