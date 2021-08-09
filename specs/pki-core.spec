@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  15
+%define redhat_release  16
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  15
+%define fedora_release  16
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -220,6 +220,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch11: pki-core-rhel-7-9-rhcs-9-7-bu-6.0.patch
 #Patch12: pki-core-rhel-7-9-rhcs-9-7-bu-6.1.patch
 #Patch13: pki-core-rhel-7-9-rhcs-9-7-bu-7.patch
+#Patch14: pki-core-rhel-7-9-rhcs-9-7-bu-8.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -834,6 +835,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch11 -p1
 #%patch12 -p1
 #%patch13 -p1
+#%patch14 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1371,6 +1373,21 @@ fi
 %endif # %{with server}
 
 %changelog
+* Mon Aug  9 2021 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-16
+- ##########################################################################
+- # RHEL 7.9 (Batch Update 8):
+- ##########################################################################
+- Bugzilla Bug 1958277 - PKCS10Client EC Attribute Encoding [cfu]
+- Bugzilla Bug 1958788 - ipa: ERROR: Request failed with status 500:
+  Non-2xx response from CA REST API: 500 [ftweedale, ckelley]
+- ##########################################################################
+- # RHCS 9.7 (Batch Update 8):
+- ##########################################################################
+- Bugzilla Bug 1959937 - TPS Allowing Token Transactions while
+  the CA is Down [cfu]
+- Bugzilla Bug 1979710 - TPS Not properly enforcing Token Profile
+  Separation [cfu]
+
 * Fri Jun 25 2021 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-15
 - ##########################################################################
 - # RHEL 7.9:
