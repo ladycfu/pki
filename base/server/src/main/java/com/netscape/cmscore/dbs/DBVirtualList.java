@@ -421,7 +421,7 @@ public class DBVirtualList<E extends IDBObj> implements IDBVirtualList<E> {
 
     private synchronized boolean getEntries() {
 
-        logger.info("DBVirtualList: Searching " + mBase);
+        logger.debug("DBVirtualList: Searching " + mBase);
 
         // Specify necessary controls for vlist
         // LDAPSearchConstraints cons = mConn.getSearchConstraints();
@@ -439,7 +439,7 @@ public class DBVirtualList<E extends IDBObj> implements IDBVirtualList<E> {
         try {
             //what happen if there is no matching?
             String ldapFilter = mRegistry.getFilter(mFilter);
-            logger.info("DBVirtualList: filter: " + ldapFilter);
+            logger.debug("DBVirtualList: filter: " + ldapFilter);
 
             String ldapAttrs[] = null;
             LDAPSearchResults result;
@@ -480,17 +480,22 @@ public class DBVirtualList<E extends IDBObj> implements IDBVirtualList<E> {
 
             while (result.hasMoreElements()) {
                 LDAPEntry entry = (LDAPEntry) result.nextElement();
-                logger.info("DBVirtualList: dn: " + entry.getDN());
+                logger.debug("DBVirtualList: dn: " + entry.getDN());
 
                 try {
                     LDAPAttributeSet attrs = entry.getAttributeSet();
+                    if (attrs == null)
+                        logger.debug("DBVirtualList: entry.getAttributeSet returns null");
 
                     IDBObj record = mRegistry.createObject(attrs);
+                    if (record == null)
+                        logger.debug("DBVirtualList: mRegistry.createObject returns null");
                     logger.debug("DBVirtualList: record: " + (record == null ? null : record.getClass()));
 
                     @SuppressWarnings("unchecked")
                     E o = (E) record;
 
+                    logger.debug("DBVirtualList: calling addElement");
                     mEntries.addElement(o);
 
                 } catch (Exception e) {
