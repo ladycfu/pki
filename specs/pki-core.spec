@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  17
+%define redhat_release  18
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  17
+%define fedora_release  18
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -222,6 +222,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch13: pki-core-rhel-7-9-rhcs-9-7-bu-7.patch
 #Patch14: pki-core-rhel-7-9-rhcs-9-7-bu-8.patch
 #Patch15: pki-core-rhel-7-9-rhcs-9-7-bu-9.patch
+#Patch16: pki-core-rhel-7-9-rhcs-9-7-bu-10.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -838,6 +839,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch13 -p1
 #%patch14 -p1
 #%patch15 -p1
+#%patch16 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1375,9 +1377,26 @@ fi
 %endif # %{with server}
 
 %changelog
+* Sat Oct 23 2021 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-18
+- ##########################################################################
+- # RHEL 7.9 (Batch Update 10):
+- ##########################################################################
+- Bugzillla Bug 1978345 - End Entity's List Certificates Page Back/Forward
+  Buttons are Broken (ckelley, jonahon.d.parrish@mail.mil, mharmsen)
+- Bugzilla Bug 2008707 - pkispawn bails out too easily for things that could
+  have been worked around after installation [RHEL 7.9.z] (cfu)
+- Bugzilla Bug 2016773 - Directory authentication plugin requires directory
+  admin password just for user authentication (rhel-7.9.z)
+  (awnuk@purestorage.com, jmagne)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1774177 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7 (Batch Update 7)
+
 * Wed Sep 15 2021 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-17
 - ##########################################################################
-- # RHEL 7.9 (Batch Update 8):
+- # RHEL 7.9 (Batch Update 9):
 - ##########################################################################
 - Bugzilla Bug 1958788 - ipa: ERROR: Request failed with status 500: Non-2xx
   response from CA REST API: 500 [ftweedal, ckelley]
