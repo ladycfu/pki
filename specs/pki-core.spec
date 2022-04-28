@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  19
+%define redhat_release  20
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  19
+%define fedora_release  20
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -224,6 +224,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch15: pki-core-rhel-7-9-rhcs-9-7-bu-9.patch
 #Patch16: pki-core-rhel-7-9-rhcs-9-7-bu-10.patch
 #Patch17: pki-core-rhel-7-9-rhcs-9-7-bu-11.patch
+#Patch18: pki-core-rhel-7-9-rhcs-9-7-bu-14.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -842,6 +843,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch15 -p1
 #%patch16 -p1
 #%patch17 -p1
+#%patch18 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1379,6 +1381,18 @@ fi
 %endif # %{with server}
 
 %changelog
+* Mon Apr 25 2022 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-20
+- ##########################################################################
+- # RHEL 7.9 (Batch Update 14):
+- ##########################################################################
+- Bugzilla Bug #2074722 - user password and pkcs12 password exposure when
+  debug level set to maximum [RHEL 7.9.z] (cfu)
+- ##########################################################################
+- # RHCS 9.7:
+- ##########################################################################
+- Bugzilla Bug #1774177 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7 (Batch Update 7)
+
 * Thu Dec 16 2021 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-19
 - ##########################################################################
 - # RHEL 7.9 (Batch Update 11):
