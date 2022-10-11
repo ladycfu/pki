@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  22
+%define redhat_release  23
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  22
+%define fedora_release  23
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -226,7 +226,8 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch17: pki-core-rhel-7-9-rhcs-9-7-bu-11.patch
 ##Patch18: pki-core-rhel-7-9-rhcs-9-7-bu-14.patch
 #Patch19: pki-core-rhel-7-9-rhcs-9-7-bu-15.patch
-#Patch20: pki-core-rhel-7-9-rhcs-9-7-bu-17.patch
+##Patch20: pki-core-rhel-7-9-rhcs-9-7-bu-17.patch
+#Patch21: pki-core-rhel-7-9-rhcs-9-7-bu-18.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -847,7 +848,8 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch17 -p1
 ##%patch18 -p1
 #%patch19 -p1
-#%patch20 -p1
+##%patch20 -p1
+#%patch21 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1385,6 +1387,25 @@ fi
 %endif # %{with server}
 
 %changelog
+* Mon Oct 10 2022 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-23
+- ##########################################################################
+- # RHEL 7.9 (Batch Update 18):
+- ##########################################################################
+- Bugzilla Bug #2107329 - CVE-2022-2414 pki-core: access to external
+  entities when parsing XML can lead to XXE [rhel-7.9.z] (ckelley, mharmsen)
+- Bugzilla Bug #2111514 - CVE-2022-2393 pki-core: When using the
+  caServerKeygen_DirUserCert profile, user can get certificates for other
+  UIDs by entering name in Subject field [rhel-7.9] (cfu, ckelley)
+- ##########################################################################
+- # RHCS 9.7 (Batch Update 18):
+- ##########################################################################
+- Bugzilla Bug #2107325 - CVE-2022-2414 pki-core: access to external
+  entities when parsing XML can lead to XXE [certificate_system_9.7.z]
+  (ckelley, mharmsen)
+- Bugzilla Bug #2111493 - CVE-2022-2393 pki-core: When using the
+  caServerKeygen_DirUserCert profile, user can get certificates for other
+  UIDs by entering name in Subject field [rhcs_9.7] (cfu, ckelley)
+
 * Mon Aug 22 2022 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-22
 - ##########################################################################
 - # RHEL 7.9 (Batch Update 17):
