@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  23
+%define redhat_release  24
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  23
+%define fedora_release  24
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -227,6 +227,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 #Patch19: pki-core-rhel-7-9-rhcs-9-7-bu-15.patch
 ##Patch20: pki-core-rhel-7-9-rhcs-9-7-bu-17.patch
 #Patch21: pki-core-rhel-7-9-rhcs-9-7-bu-18.patch
+#Patch22: pki-core-rhel-7-9-rhcs-9-7-bu-19.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -848,6 +849,7 @@ This package is a part of the PKI Core used by the Certificate System.
 #%patch19 -p1
 ##%patch20 -p1
 #%patch21 -p1
+#%patch22 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1384,6 +1386,19 @@ fi
 %endif # %{with server}
 
 %changelog
+* Wed Oct 26 2022 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-24
+- ##########################################################################
+- # RHEL 7.9 (Batch Update 19):
+- ##########################################################################
+- Bugzilla Bug #2107329 - CVE-2022-2414 pki-core: access to external
+  entities when parsing XML can lead to XXE [rhel-7.9.z] (ckelley, mharmsen)
+- ##########################################################################
+- # RHCS 9.7 (Batch Update 19):
+- ##########################################################################
+- Bugzilla Bug #2107325 - CVE-2022-2414 pki-core: access to external
+  entities when parsing XML can lead to XXE [certificate_system_9.7.z]
+  (ckelley, mharmsen)
+
 * Mon Oct 10 2022 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-23
 - ##########################################################################
 - # RHEL 7.9 (Batch Update 18):
