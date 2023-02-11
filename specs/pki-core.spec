@@ -65,13 +65,13 @@
 Name:             pki-core
 %if 0%{?rhel}
 Version:                10.5.18
-%define redhat_release  24
+%define redhat_release  25
 %define redhat_stage    0
 %define default_release %{redhat_release}.%{redhat_stage}
 #%define default_release %{redhat_release}
 %else
 Version:                10.5.18
-%define fedora_release  24
+%define fedora_release  25
 %define fedora_stage    0
 %define default_release %{fedora_release}.%{fedora_stage}
 #%define default_release %{fedora_release}
@@ -228,6 +228,7 @@ Source0:          http://pki.fedoraproject.org/pki/sources/%{name}/%{version}/%{
 ##Patch20: pki-core-rhel-7-9-rhcs-9-7-bu-17.patch
 #Patch21: pki-core-rhel-7-9-rhcs-9-7-bu-18.patch
 #Patch22: pki-core-rhel-7-9-rhcs-9-7-bu-19.patch
+#Patch23: pki-core-rhel-7-9-rhcs-9-7-bu-21.patch
 
 # Obtain version phase number (e. g. - used by "alpha", "beta", etc.)
 #
@@ -850,6 +851,7 @@ This package is a part of the PKI Core used by the Certificate System.
 ##%patch20 -p1
 #%patch21 -p1
 #%patch22 -p1
+#%patch23 -p1
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -1386,6 +1388,18 @@ fi
 %endif # %{with server}
 
 %changelog
+* Fri Feb 10 2023 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-25
+- ##########################################################################
+- # RHEL 7.9 (Batch Update 21):
+- ##########################################################################
+- Bugzilla Bug #2160355 - RA Separation by KeyType - Set Token Status
+  [RHCS 9.7 bu 21] (cfu, ckelley)
+- ##########################################################################
+- # RHCS 9.7 (Batch Update 21):
+- ##########################################################################
+- Bugzilla Bug #1774177 - Rebase redhat-pki, redhat-pki-theme, pki-core, and
+  pki-console to 10.5.18 in RHCS 9.7 (Batch Update 7)
+
 * Wed Oct 26 2022 Dogtag Team <devel@lists.dogtagpki.org> 10.5.18-24
 - ##########################################################################
 - # RHEL 7.9 (Batch Update 19):
