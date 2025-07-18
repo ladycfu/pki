@@ -1,3 +1,10 @@
+##
+# NSS V3.112 have some PQC defs in auth_alg_defs of ssl3con.c
+# that need to be reflected into JSS SSLCipher.c (auth_alg_defs[])
+# The upstream NSS (currently v3.113) apparently has no such defs.
+#
+option(ENABLE_NSS_VERSION_PQC_DEF "Enable PQC DEF to match NSS" OFF)
+
 macro(jss_config)
     # Set the current JSS release number. Arguments are:
     #   MAJOR MINOR PATCH BETA
@@ -138,6 +145,10 @@ macro(jss_config_cflags)
         list(APPEND JSS_RAW_C_FLAGS "-DFORCE_PR_ASSERT")
     else()
         list(APPEND JSS_RAW_C_FLAGS "-O2")
+    endif()
+
+    if(ENABLE_NSS_VERSION_PQC_DEF)
+        list(APPEND JSS_RAW_C_FLAGS "-DNSS_VERSION_PQC_DEF")
     endif()
 
     list(APPEND JSS_RAW_C_FLAGS "-Wall")
