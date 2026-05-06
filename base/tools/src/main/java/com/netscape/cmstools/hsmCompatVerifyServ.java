@@ -362,7 +362,9 @@ public class hsmCompatVerifyServ {
         option.setArgName("type");
         options.addOption(option);
 
-        options.addOption(null, "legacyPKCS12", false, "Use legacy PKCS#12 format (PBE_SHA1_DES3_CBC). Default: non-legacy (AES-256-KWP)");
+        option = new Option(null, "pkcs12-mode", true, "PKCS#12 encryption mode: kwp (AES-KWP, default), cbc (AES-256-CBC), or legacy (3DES-CBC)");
+        option.setArgName("mode");
+        options.addOption(option);
 
         options.addOption("v", "verbose", false, "Run in verbose mode");
         options.addOption(null, "help", false, "Show help message");
@@ -544,7 +546,14 @@ public class hsmCompatVerifyServ {
         boolean autoYes = cmd.hasOption("yes");
         boolean archiveOnly = cmd.hasOption("archive-only");
         boolean recoverOnly = cmd.hasOption("recover-only");
-        boolean legacyPKCS12 = cmd.hasOption("legacyPKCS12");
+
+        // PKCS#12 mode: kwp (default), cbc, or legacy
+        String pkcs12Mode = cmd.getOptionValue("pkcs12-mode", "kwp").toLowerCase();
+        if (!pkcs12Mode.equals("kwp") && !pkcs12Mode.equals("cbc") && !pkcs12Mode.equals("legacy")) {
+            System.err.println("ERROR: Invalid --pkcs12-mode value: " + pkcs12Mode);
+            System.err.println("Valid values: kwp, cbc, legacy");
+            return;
+        }
 
         // PQC options
         boolean pqcMode = cmd.hasOption("pqc");
@@ -670,7 +679,10 @@ public class hsmCompatVerifyServ {
             // If relative path, resolve it relative to client-db-path
             java.io.File outputFileObj = new java.io.File(outputFile);
             if (!outputFileObj.isAbsolute()) {
-                outputFile = clientDB + "/" + outputFile;
+                // Don't prefix if path already starts with clientDB
+                if (!outputFile.startsWith(clientDB + "/") && !outputFile.startsWith(clientDB + java.io.File.separator)) {
+                    outputFile = clientDB + "/" + outputFile;
+                }
             }
         }
         String recoveryPasswd = cmd.getOptionValue("r");
@@ -884,9 +896,7 @@ public class hsmCompatVerifyServ {
                 if (autoYes) {
                     System.out.println("  --yes");
                 }
-                if (legacyPKCS12) {
-                    System.out.println("  --legacyPKCS12");
-                }
+                System.out.println("  --pkcs12-mode " + pkcs12Mode);
                 System.out.println();
 
                 if (pqcMode) {
@@ -901,8 +911,9 @@ public class hsmCompatVerifyServ {
                         outputFile, recoveryPasswd,
                         keywrapAlg,
                         archiveOnly,
+                        recoverOnly,
                         ldifFile,
-                        legacyPKCS12,
+                        pkcs12Mode,
                         userKeyType,
                         pqcKemAlgorithm
                     );
@@ -920,7 +931,7 @@ public class hsmCompatVerifyServ {
                         archiveOnly,
                         recoverOnly,
                         ldifFile,
-                        legacyPKCS12
+                        pkcs12Mode
                     );
                 }
                 System.out.println();
@@ -2033,7 +2044,7 @@ public class hsmCompatVerifyServ {
         boolean archiveOnly,
         boolean recoverOnly,
         String ldifFile,
-        boolean legacyPKCS12
+        String pkcs12Mode
     ) throws Exception {
 
         log("=== KRA HSM Compatibility Verification - Verification Phase ===");
@@ -2096,23 +2107,16 @@ public class hsmCompatVerifyServ {
                     storageIvSpec = new org.mozilla.jss.crypto.IVParameterSpec(ivBytes);
                 }
 
-                // Create user certificate using owner name from LDIF (or use provided subjectDN)
-                String certSubjectDN = (String) ldifData.get("ownerName");
-                if (certSubjectDN == null || certSubjectDN.isEmpty()) {
-                    certSubjectDN = subjectDN != null ? subjectDN : "CN=Recovered User";
-                }
-
+                // Get user certificate from LDIF
                 log("");
-                log("Step 4a: Creating user certificate signed by CA");
-                userCert = createUserCert(
-                    hsmTokenObj,
-                    manager,
-                    caCert,
-                    caNickname,
-                    certSubjectDN,
-                    userPublicKey
-                );
-                log("  - User certificate created and signed by CA");
+                log("Step 4a: Loading user certificate from LDIF");
+                userCert = (X509CertImpl) ldifData.get("certificate");
+                if (userCert == null) {
+                    throw new Exception("Certificate not found in LDIF - cannot recover key without certificate");
+                }
+                log("  - User certificate loaded from LDIF");
+                log("    Subject: " + userCert.getSubjectDN());
+                log("    Serial: " + userCert.getSerialNumber());
 
                 // Step 7: KRA recovery - unwrap from storage on HSM
                 log("");
@@ -2170,11 +2174,11 @@ public class hsmCompatVerifyServ {
                     hsmTokenObj,
                     recoveryPasswd,
                     recordOutputFile,
-                    legacyPKCS12
+                    pkcs12Mode
                 );
 
                 log("  - PKCS#12 file created: " + recordOutputFile);
-                log("  - PKCS#12 format: " + (legacyPKCS12 ? "Legacy (PBE_SHA1_DES3_CBC)" : "Non-legacy (AES-KWP)"));
+                log("  - PKCS#12 format: " + getPKCS12ModeDescription(pkcs12Mode));
                 log("  - Using token: " + hsmTokenObj.getName());
 
                 outputFiles.add(recordOutputFile);
@@ -2429,11 +2433,11 @@ public class hsmCompatVerifyServ {
                 hsmTokenObj,
                 recoveryPasswd,
                 outputFile,
-                legacyPKCS12
+                pkcs12Mode
             );
 
             log("  - PKCS#12 file created: " + outputFile);
-            log("  - PKCS#12 format: " + (legacyPKCS12 ? "Legacy (PBE_SHA1_DES3_CBC)" : "Non-legacy (AES-KWP)"));
+            log("  - PKCS#12 format: " + getPKCS12ModeDescription(pkcs12Mode));
             log("  - Using token: " + hsmTokenObj.getName());
 
             // Verification Summary
@@ -2487,7 +2491,7 @@ public class hsmCompatVerifyServ {
      * @param keywrapAlg Key wrap algorithm (AES-KWP)
      * @param archiveOnly If true, create LDIF and stop (archival only mode)
      * @param ldifFile LDIF file path for archival output
-     * @param legacyPKCS12 Whether to use legacy PKCS#12 format
+     * @param pkcs12Mode PKCS#12 encryption mode (kwp, pbes2, or legacy)
      * @param kemAlgorithm ML-KEM algorithm (mlkem512/768/1024)
      */
     public void runTestPQC(
@@ -2506,8 +2510,9 @@ public class hsmCompatVerifyServ {
         String recoveryPasswd,
         String keywrapAlg,
         boolean archiveOnly,
+        boolean recoverOnly,
         String ldifFile,
-        boolean legacyPKCS12,
+        String pkcs12Mode,
         String userKeyType,
         String kemAlgorithm
     ) throws Exception {
@@ -2517,6 +2522,8 @@ public class hsmCompatVerifyServ {
         log("User key type: " + userKeyType);
         if (archiveOnly) {
             log("Mode: Archival to LDIF file (no recovery)");
+        } else if (recoverOnly) {
+            log("Mode: Recovery from LDIF file (no archival)");
         } else {
             log("Mode: Full archival and recovery workflow");
         }
@@ -2535,70 +2542,132 @@ public class hsmCompatVerifyServ {
 
         KeyWrapAlgorithm keyWrapAlgorithm = KeyWrapAlgorithm.fromString(keywrapAlg);
 
-        // Step 4: Load wrapped keys and ML-KEM public key from files
+        // Step 4: Load wrapped keys and ML-KEM public key
+        byte[] kemCiphertext;
+        byte[] wrappedUserPrivate;
+        PublicKey userPublicKey;
+        X509CertImpl userCert;
+
         log("");
-        log("Step 4: Loading wrapped keys from files (generated by hsmCompatVerifyClnt --pqc)");
-        log("  KEM ciphertext: " + kemCiphertextFile);
-        log("  Wrapped private key: " + wrappedPrivateFile);
-        log("  Public key: " + publicKeyFile);
+        if (archiveOnly) {
+            // Archive mode: Load from client-generated .bin/.der files
+            log("Step 4: Loading wrapped keys from files (generated by hsmCompatVerifyClnt --pqc)");
+            log("  KEM ciphertext: " + kemCiphertextFile);
+            log("  Wrapped private key: " + wrappedPrivateFile);
+            log("  Public key: " + publicKeyFile);
 
-        byte[] kemCiphertext = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(kemCiphertextFile));
-        log("  - KEM ciphertext loaded (" + kemCiphertext.length + " bytes)");
+            kemCiphertext = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(kemCiphertextFile));
+            log("  - KEM ciphertext loaded (" + kemCiphertext.length + " bytes)");
 
-        byte[] wrappedUserPrivate = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(wrappedPrivateFile));
-        log("  - Wrapped private key loaded (" + wrappedUserPrivate.length + " bytes)");
+            wrappedUserPrivate = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(wrappedPrivateFile));
+            log("  - Wrapped private key loaded (" + wrappedUserPrivate.length + " bytes)");
 
-        byte[] publicKeyBytes = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(publicKeyFile));
+            byte[] publicKeyBytes = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(publicKeyFile));
 
-        // Load public key using appropriate KeyFactory based on user key type
-        java.security.KeyFactory keyFactory;
-        if ("RSA".equalsIgnoreCase(userKeyType)) {
-            keyFactory = java.security.KeyFactory.getInstance("RSA");
-        } else if ("EC".equalsIgnoreCase(userKeyType)) {
-            keyFactory = java.security.KeyFactory.getInstance("EC");
-        } else if ("ML-KEM".equalsIgnoreCase(userKeyType)) {
-            keyFactory = java.security.KeyFactory.getInstance("ML-KEM", "Mozilla-JSS");
+            // Load public key using appropriate KeyFactory based on user key type
+            java.security.KeyFactory keyFactory;
+            if ("RSA".equalsIgnoreCase(userKeyType)) {
+                keyFactory = java.security.KeyFactory.getInstance("RSA");
+            } else if ("EC".equalsIgnoreCase(userKeyType)) {
+                keyFactory = java.security.KeyFactory.getInstance("EC");
+            } else if ("ML-KEM".equalsIgnoreCase(userKeyType)) {
+                keyFactory = java.security.KeyFactory.getInstance("ML-KEM", "Mozilla-JSS");
+            } else {
+                throw new Exception("Unsupported user key type: " + userKeyType);
+            }
+
+            userPublicKey = keyFactory.generatePublic(
+                new java.security.spec.X509EncodedKeySpec(publicKeyBytes)
+            );
+            log("  - " + userKeyType + " public key loaded (" + publicKeyBytes.length + " bytes)");
+
+            // Step 4a: Create user certificate signed by CA
+            log("");
+            log("Step 4a: Creating user certificate signed by CA");
+            log("  Subject DN: " + subjectDN);
+
+            userCert = createUserCert(
+                hsmTokenObj,
+                manager,
+                caCert,
+                caNickname,
+                subjectDN,
+                userPublicKey
+            );
+            log("  - User certificate created and signed by CA");
         } else {
-            throw new Exception("Unsupported user key type: " + userKeyType);
+            // Recovery mode: Load from LDIF file
+            log("Step 4: Reading archived key data from LDIF file");
+            log("  LDIF file: " + ldifFile);
+
+            java.util.List<Map<String, Object>> keyRecords = readLDIFFile(ldifFile);
+            if (keyRecords.isEmpty()) {
+                throw new Exception("No key records found in LDIF file");
+            }
+
+            // For now, process first record (could be extended for multiple records)
+            Map<String, Object> ldifData = keyRecords.get(0);
+
+            log("  Serial: " + ldifData.get("serialno"));
+            log("  Owner: " + ldifData.get("ownerName"));
+
+            // Extract data from LDIF
+            // For PQC: wrappedSessionKey contains KEM ciphertext (not wrapped session key)
+            kemCiphertext = (byte[]) ldifData.get("wrappedSessionKey");
+            wrappedUserPrivate = (byte[]) ldifData.get("wrappedPrivateKey");
+            userPublicKey = (PublicKey) ldifData.get("publicKey");
+
+            log("  - KEM ciphertext loaded from LDIF (" + kemCiphertext.length + " bytes)");
+            log("  - Wrapped private key loaded from LDIF (" + wrappedUserPrivate.length + " bytes)");
+            log("  - " + userKeyType + " public key loaded from LDIF");
+            log("    Public key algorithm: " + userPublicKey.getAlgorithm());
+
+            // Step 4a: Get user certificate from LDIF
+            log("");
+            log("Step 4a: Loading user certificate from LDIF");
+            userCert = (X509CertImpl) ldifData.get("certificate");
+            if (userCert == null) {
+                throw new Exception("Certificate not found in LDIF - cannot recover key without certificate");
+            }
+            log("  - User certificate loaded from LDIF");
+            log("    Subject: " + userCert.getSubjectDN());
+            log("    Serial: " + userCert.getSerialNumber());
         }
 
-        PublicKey userPublicKey = keyFactory.generatePublic(
-            new java.security.spec.X509EncodedKeySpec(publicKeyBytes)
-        );
-        log("  - " + userKeyType + " public key loaded (" + publicKeyBytes.length + " bytes)");
-
-        // Step 4a: Create user certificate signed by CA
+        // Step 5: ML-KEM Decapsulation - recover shared secret
         log("");
-        log("Step 4a: Creating user certificate signed by CA");
-        log("  Subject DN: " + subjectDN);
-
-        X509CertImpl userCert = createUserCert(
-            hsmTokenObj,
-            manager,
-            caCert,
-            caNickname,
-            subjectDN,
-            userPublicKey
-        );
-        log("  - User certificate created and signed by CA");
-
-        // Step 5: ML-KEM Decapsulation - recover shared secret from transport
-        log("");
-        log("Step 5: ML-KEM decapsulation with transport private key");
-        log("  Decapsulating KEM ciphertext to recover shared secret");
-
         javax.crypto.KEM kem = javax.crypto.KEM.getInstance("ML-KEM", "Mozilla-JSS");
-        javax.crypto.KEM.Decapsulator decapsulator = kem.newDecapsulator(transportPrivateKey);
+        SymmetricKey recoveredSharedSecret;
 
-        // Decapsulate: recover 32-byte shared secret
-        SymmetricKey recoveredSharedSecret = (SymmetricKey) decapsulator.decapsulate(
-            kemCiphertext,
-            0,      // offset
-            32,     // size (32 bytes = 256-bit AES key)
-            "AES-ECB"  // algorithm
-        );
-        log("  - Shared secret recovered via ML-KEM decapsulation");
-        log("    Shared secret size: 32 bytes (AES-256)");
+        if (archiveOnly) {
+            // Archive mode: Decapsulate transport KEM ciphertext (from client)
+            log("Step 5: ML-KEM decapsulation with transport private key");
+            log("  Decapsulating transport KEM ciphertext to recover shared secret");
+
+            javax.crypto.KEM.Decapsulator transportDecapsulator = kem.newDecapsulator(transportPrivateKey);
+            recoveredSharedSecret = (SymmetricKey) transportDecapsulator.decapsulate(
+                kemCiphertext,
+                0,      // offset
+                32,     // size (32 bytes = 256-bit AES key)
+                "AES-ECB"  // algorithm
+            );
+            log("  - Shared secret recovered via ML-KEM decapsulation (transport)");
+            log("    Shared secret size: 32 bytes (AES-256)");
+        } else {
+            // Recovery mode: Decapsulate storage KEM ciphertext (from LDIF)
+            log("Step 5: ML-KEM decapsulation with storage private key");
+            log("  Decapsulating storage KEM ciphertext to recover shared secret");
+
+            javax.crypto.KEM.Decapsulator storageDecapsulator = kem.newDecapsulator(storagePrivateKey);
+            recoveredSharedSecret = (SymmetricKey) storageDecapsulator.decapsulate(
+                kemCiphertext,
+                0,      // offset
+                32,     // size (32 bytes = 256-bit AES key)
+                "AES-ECB"  // algorithm
+            );
+            log("  - Shared secret recovered via ML-KEM decapsulation (storage)");
+            log("    Shared secret size: 32 bytes (AES-256)");
+        }
 
         // Step 5a: Unwrap user private key with recovered shared secret
         log("");
@@ -2638,13 +2707,41 @@ public class hsmCompatVerifyServ {
         PrivateKey unwrappedUserPrivate = CryptoUtil.unwrap(
             hsmTokenObj,
             userPublicKey,
-            true,  // temporary
+            false,  // permanent - try permanent keys for ML-KEM PKCS#12 export
             recoveredSharedSecret,
             wrappedUserPrivate,
             keyWrapAlgorithm,
             null   // No IV for AES-KWP
         );
-        log("  - User private key unwrapped on HSM");
+        log("  - User private key unwrapped on HSM (permanent)");
+
+        // If recovery-only mode, skip archival and jump to PKCS#12 creation
+        if (recoverOnly) {
+            log("");
+            log("Step 6: Creating PKCS#12 file with recovered key");
+
+            createPKCS12(
+                userCert,
+                unwrappedUserPrivate,
+                hsmTokenObj,
+                recoveryPasswd,
+                outputFile,
+                pkcs12Mode
+            );
+            log("  - PKCS#12 file created: " + outputFile);
+            log("  - PKCS#12 format: " + getPKCS12ModeDescription(pkcs12Mode));
+
+            log("");
+            log("=== Recovery Summary (PQC Mode) ===");
+            log("+ ML-KEM decapsulation: Recovered storage shared secret");
+            log("+ User private key: Unwrapped from archive");
+            log("+ PKCS#12 file created with recovered key and certificate");
+            log("");
+            log("SUCCESS: Recovery completed - PKCS#12 file created!");
+            log("PKCS#12 file: " + outputFile);
+            log("Password: " + recoveryPasswd);
+            return;  // Done with recovery
+        }
 
         // Step 6: KRA archival - re-encapsulate with storage key
         log("");
@@ -2704,10 +2801,58 @@ public class hsmCompatVerifyServ {
             return;  // Stop here in archival-only mode
         }
 
-        // TODO: Step 7-8: Recovery workflow (for future implementation)
+        // Step 7: KRA recovery - ML-KEM decapsulation with storage key
         log("");
-        log("Note: Recovery workflow not yet implemented for PQC mode");
-        log("      Use --archive-only for now");
+        log("Step 7: KRA recovery - ML-KEM decapsulation with storage key");
+
+        // Decapsulate storage KEM ciphertext with storage private key
+        javax.crypto.KEM.Decapsulator storageDecapsulator = kem.newDecapsulator(storagePrivateKey);
+        javax.crypto.SecretKey recoveredStorageSharedSecret = storageDecapsulator.decapsulate(
+            storageKemCiphertext, 0, storageKemCiphertext.length, "AES-ECB");
+
+        log("  - Storage shared secret recovered via ML-KEM decapsulation");
+        log("    Shared secret size: " + ((SymmetricKey)recoveredStorageSharedSecret).getLength() + " bytes (AES-256)");
+
+        // Step 7a: Unwrap user private key with recovered storage shared secret
+        log("");
+        log("Step 7a: Unwrapping user private key from archive");
+        log("  Using recovered storage shared secret with " + keyWrapAlgorithm);
+
+        PrivateKey recoveredUserPrivate = CryptoUtil.unwrap(
+            hsmTokenObj,
+            userPublicKey,
+            true,  // temporary
+            (SymmetricKey) recoveredStorageSharedSecret,
+            archivedUserPrivate,
+            keyWrapAlgorithm,
+            null   // No IV for AES-KWP
+        );
+        log("  - User private key recovered from archive on HSM");
+
+        // Step 8: Create PKCS#12 file with recovered key and CA-signed certificate
+        log("");
+        log("Step 8: Creating PKCS#12 file");
+
+        createPKCS12(
+            userCert,
+            recoveredUserPrivate,
+            hsmTokenObj,
+            recoveryPasswd,
+            outputFile,
+            pkcs12Mode
+        );
+        log("  - PKCS#12 file created: " + outputFile);
+        log("  - PKCS#12 format: " + getPKCS12ModeDescription(pkcs12Mode));
+
+        log("");
+        log("=== Recovery Summary (PQC Mode) ===");
+        log("+ ML-KEM decapsulation: Recovered storage shared secret");
+        log("+ User private key: Unwrapped from archive");
+        log("+ PKCS#12 file created with recovered key and certificate");
+        log("");
+        log("SUCCESS: Recovery completed - PKCS#12 file created!");
+        log("PKCS#12 file: " + outputFile);
+        log("Password: " + recoveryPasswd);
     }
 
     /**
@@ -2843,7 +2988,12 @@ public class hsmCompatVerifyServ {
      * Adopted from: base/kra/src/main/java/com/netscape/kra/RecoveryService.java:564-724
      * (createPFX method with PrivateKey parameter)
      *
-     * Differences: Simplified, no request object, no audit logging, always legacy PKCS#12
+     * Differences: Simplified, no request object, no audit logging
+     *
+     * @param pkcs12Mode PKCS#12 encryption mode:
+     *   - "kwp": AES-KWP (fails for ML-KEM keys currently)
+     *   - "pbes2": PKCS#5 v2 PBKDF2+AES-256-CBC (FIPS-compliant, like pk12util)
+     *   - "legacy": PBE_SHA1_DES3_CBC (not recommended for FIPS HSMs)
      */
     private void createPKCS12(
         X509CertImpl cert,
@@ -2851,7 +3001,7 @@ public class hsmCompatVerifyServ {
         CryptoToken token,
         String password,
         String outputFile,
-        boolean legacyPKCS12
+        String pkcs12Mode
     ) throws Exception {
 
         Password pass = new Password(password.toCharArray());
@@ -2875,7 +3025,7 @@ public class hsmCompatVerifyServ {
             SEQUENCE safeContents = new SEQUENCE();
 
             ASN1Value key;
-            if (legacyPKCS12) {
+            if (pkcs12Mode.equals("legacy")) {
                 // Legacy PKCS#12: PBE_SHA1_DES3_CBC
                 // Compatible with older systems but may fail on some HSMs (e.g., Thales FIPS 140-3)
                 PasswordConverter passConverter = new PasswordConverter();
@@ -2892,20 +3042,51 @@ public class hsmCompatVerifyServ {
                     privateKey,
                     token
                 );
-            } else {
-                // Non-legacy PKCS#12: AES Key Wrap with Padding (AES-KWP)
+            } else if (pkcs12Mode.equals("cbc")) {
+                // AES-256-CBC with PBKDF2
+                // This matches KRA's default non-legacy algorithm (kra.nonLegacyAlg="AES/CBC/NoPadding")
+                // Uses getCryptoStore().getEncryptedPrivateKeyInfo() which automatically applies PBKDF2
+                // FIPS-compliant, works with ML-KEM keys
+                String nonLegacyAlg = "AES/CBC/NoPadding";
+                EncryptionAlgorithm encAlg = EncryptionAlgorithm.fromString(nonLegacyAlg);
+                if (encAlg == null) {
+                    encAlg = EncryptionAlgorithm.AES_256_CBC;
+                }
+
+                byte[] epkiBytes = token.getCryptoStore().getEncryptedPrivateKeyInfo(
+                    null, // No password converter for non-legacy (PBKDF2 mode)
+                    pass,
+                    encAlg,
+                    0, // Use default iterations (2000 for PBKDF2)
+                    privateKey
+                );
+                key = new ANY(epkiBytes);
+            } else {  // pkcs12Mode.equals("kwp")
+                // AES Key Wrap with Padding (AES-KWP)
                 // This matches the recommended KRA settings for HSM compatibility:
                 //   keyWrap.useOAEP=true
                 //   kra.legacyPKCS12=false
                 //   kra.nonLegacyAlg=AES/None/PKCS5Padding/Kwp/256
                 // AES-KWP is secure, modern, and compatible with HSMs in FIPS mode
                 // Unlike AES-CBC, KWP doesn't require an IV, avoiding HSM compatibility issues
+                // Note: Currently fails for ML-KEM keys (NSS limitation)
                 String nonLegacyAlg = "AES/None/PKCS5Padding/Kwp/256";
                 EncryptionAlgorithm encAlg = EncryptionAlgorithm.fromString(nonLegacyAlg);
                 if (encAlg == null) {
                     // Fallback to AES-256-CBC if KWP is not available
                     encAlg = EncryptionAlgorithm.AES_256_CBC;
                 }
+
+                // Debug: Check key properties before export
+                System.out.println("DEBUG: About to export key to PKCS#12");
+                System.out.println("  Key algorithm: " + privateKey.getAlgorithm());
+                System.out.println("  Key format: " + privateKey.getFormat());
+                if (privateKey instanceof org.mozilla.jss.pkcs11.PK11PrivKey) {
+                    org.mozilla.jss.pkcs11.PK11PrivKey pk11Key = (org.mozilla.jss.pkcs11.PK11PrivKey) privateKey;
+                    System.out.println("  Owning token: " + pk11Key.getOwningToken().getName());
+                }
+                System.out.println("  Encryption algorithm: " + encAlg);
+
                 byte[] epkiBytes = token.getCryptoStore().getEncryptedPrivateKeyInfo(
                     null, // No password converter for non-legacy
                     pass,
@@ -2937,6 +3118,25 @@ public class hsmCompatVerifyServ {
 
         } finally {
             pass.clear();
+        }
+    }
+
+    /**
+     * Returns a human-readable description of the PKCS#12 encryption mode.
+     *
+     * @param pkcs12Mode The PKCS#12 mode ("kwp", "cbc", or "legacy")
+     * @return User-friendly description of the encryption mode
+     */
+    private String getPKCS12ModeDescription(String pkcs12Mode) {
+        switch (pkcs12Mode) {
+            case "kwp":
+                return "AES-256-KWP";
+            case "cbc":
+                return "AES-256-CBC (PBKDF2)";
+            case "legacy":
+                return "Legacy (PBE_SHA1_DES3_CBC)";
+            default:
+                return "Unknown (" + pkcs12Mode + ")";
         }
     }
 
@@ -3236,6 +3436,10 @@ public class hsmCompatVerifyServ {
         // Public key data (base64-encoded)
         ldif.append("publicKeyData:: ").append(java.util.Base64.getEncoder().encodeToString(publicKeyData)).append("\n");
 
+        // Certificate data (base64-encoded DER)
+        byte[] certData = cert.getEncoded();
+        ldif.append("archivedUserCert:: ").append(java.util.Base64.getEncoder().encodeToString(certData)).append("\n");
+
         // Request type - required by KRATool to identify record type
         // "enrollment" starts with "CA" which matches KRA_LDIF_CA_KEY_RECORD
         ldif.append("extdata-requesttype: enrollment\n");
@@ -3314,6 +3518,7 @@ public class hsmCompatVerifyServ {
         Map<String, Object> currentRecord = null;
         String privateKeyDataB64 = null;
         String publicKeyDataB64 = null;
+        String archivedUserCertB64 = null;
         String sessionKeyWrapAlg = null;
         String payloadWrapAlg = null;
         String payloadWrapIV = null;
@@ -3348,6 +3553,13 @@ public class hsmCompatVerifyServ {
                         new java.security.spec.X509EncodedKeySpec(publicKeyData)
                     );
 
+                    // Decode certificate if present
+                    X509CertImpl cert = null;
+                    if (archivedUserCertB64 != null) {
+                        byte[] certData = java.util.Base64.getDecoder().decode(archivedUserCertB64);
+                        cert = new X509CertImpl(certData);
+                    }
+
                     // Parse IV if present
                     byte[] iv = null;
                     if (payloadWrapIV != null) {
@@ -3358,6 +3570,7 @@ public class hsmCompatVerifyServ {
                     currentRecord.put("wrappedPrivateKey", wrappedPrivateKey);
                     currentRecord.put("wrappedSessionKey", wrappedSessionKey);
                     currentRecord.put("publicKey", publicKey);
+                    currentRecord.put("certificate", cert);
                     currentRecord.put("sessionKeyWrapAlg", sessionKeyWrapAlg);
                     currentRecord.put("payloadWrapAlg", payloadWrapAlg);
                     currentRecord.put("payloadWrapIV", iv);
@@ -3370,6 +3583,7 @@ public class hsmCompatVerifyServ {
                 // Reset for next record
                 privateKeyDataB64 = null;
                 publicKeyDataB64 = null;
+                archivedUserCertB64 = null;
                 sessionKeyWrapAlg = null;
                 payloadWrapAlg = null;
                 payloadWrapIV = null;
@@ -3391,6 +3605,8 @@ public class hsmCompatVerifyServ {
                 privateKeyDataB64 = line.substring("privateKeyData:: ".length());
             } else if (line.startsWith("publicKeyData:: ")) {
                 publicKeyDataB64 = line.substring("publicKeyData:: ".length());
+            } else if (line.startsWith("archivedUserCert:: ")) {
+                archivedUserCertB64 = line.substring("archivedUserCert:: ".length());
             } else if (line.startsWith("metaInfo: sessionKeyWrapAlgorithm:")) {
                 sessionKeyWrapAlg = line.substring("metaInfo: sessionKeyWrapAlgorithm:".length());
             } else if (line.startsWith("metaInfo: payloadWrapAlgorithm:")) {
