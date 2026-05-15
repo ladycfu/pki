@@ -1658,24 +1658,24 @@ public class hsmCompatVerifyServ {
         String certType
     ) throws Exception {
 
-        // Map ML-KEM algorithm name to parameter size
-        int kemParamSize;
+        // Map ML-KEM algorithm name to parameter strength
+        int kemStrength;
         switch (mlkemAlgorithm.toLowerCase()) {
             case "mlkem512":
-                kemParamSize = 512;
+                kemStrength = 512;
                 break;
             case "mlkem768":
-                kemParamSize = 768;
+                kemStrength = 768;
                 break;
             case "mlkem1024":
-                kemParamSize = 1024;
+                kemStrength = 1024;
                 break;
             default:
                 throw new Exception("Unsupported ML-KEM algorithm: " + mlkemAlgorithm);
         }
 
         // Generate ML-KEM key pair using CryptoUtil
-        KeyPair keyPair = CryptoUtil.generateMLKEMKeyPair(token, kemParamSize, null, null, null, null, null);
+        KeyPair keyPair = CryptoUtil.generateMLKEMKeyPair(token, kemStrength, null, null, null, null, null);
         PublicKey publicKey = keyPair.getPublic();
 
         // Prepare certificate parameters
