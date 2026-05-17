@@ -675,15 +675,6 @@ public class hsmCompatVerifyServ {
         String outputFile = cmd.getOptionValue("o");
         if (outputFile == null) {
             outputFile = clientDB + "/kra-recovered.p12";
-        } else {
-            // If relative path, resolve it relative to client-db-path
-            java.io.File outputFileObj = new java.io.File(outputFile);
-            if (!outputFileObj.isAbsolute()) {
-                // Don't prefix if path already starts with clientDB
-                if (!outputFile.startsWith(clientDB + "/") && !outputFile.startsWith(clientDB + java.io.File.separator)) {
-                    outputFile = clientDB + "/" + outputFile;
-                }
-            }
         }
         String recoveryPasswd = cmd.getOptionValue("r");
         String recoveryPasswdFile = cmd.getOptionValue("recovery-passwd-file");
@@ -1564,25 +1555,9 @@ public class hsmCompatVerifyServ {
         String mldsaAlgorithm
     ) throws Exception {
 
-        // Map algorithm name to parameter size and signature algorithm
-        int paramSize;
-        SignatureAlgorithm sigAlg;
-        switch (mldsaAlgorithm.toLowerCase()) {
-            case "mldsa44":
-                paramSize = 44;
-                sigAlg = SignatureAlgorithm.MLDSA44;
-                break;
-            case "mldsa65":
-                paramSize = 65;
-                sigAlg = SignatureAlgorithm.MLDSA65;
-                break;
-            case "mldsa87":
-                paramSize = 87;
-                sigAlg = SignatureAlgorithm.MLDSA87;
-                break;
-            default:
-                throw new Exception("Unsupported ML-DSA algorithm: " + mldsaAlgorithm);
-        }
+        // Map algorithm name to parameter size and signature algorithm using CryptoUtil
+        int paramSize = CryptoUtil.getMLDSAStrength(mldsaAlgorithm);
+        SignatureAlgorithm sigAlg = CryptoUtil.getMLDSASignatureAlgorithm(mldsaAlgorithm);
 
         // Generate ML-DSA key pair using CryptoUtil
         KeyPair keyPair = CryptoUtil.generateMLDSAKeyPair(token, paramSize, null, null, null, null, null);
@@ -1658,21 +1633,8 @@ public class hsmCompatVerifyServ {
         String certType
     ) throws Exception {
 
-        // Map ML-KEM algorithm name to parameter strength
-        int kemStrength;
-        switch (mlkemAlgorithm.toLowerCase()) {
-            case "mlkem512":
-                kemStrength = 512;
-                break;
-            case "mlkem768":
-                kemStrength = 768;
-                break;
-            case "mlkem1024":
-                kemStrength = 1024;
-                break;
-            default:
-                throw new Exception("Unsupported ML-KEM algorithm: " + mlkemAlgorithm);
-        }
+        // Map ML-KEM algorithm name to parameter strength using CryptoUtil
+        int kemStrength = CryptoUtil.getMLKEMStrength(mlkemAlgorithm);
 
         // Generate ML-KEM key pair using CryptoUtil
         KeyPair keyPair = CryptoUtil.generateMLKEMKeyPair(token, kemStrength, null, null, null, null, null);
@@ -1686,21 +1648,8 @@ public class hsmCompatVerifyServ {
         Date notBefore = new Date();
         Date notAfter = new Date(notBefore.getTime() + (validityDays * 24L * 60 * 60 * 1000));
 
-        // Determine CA signature algorithm
-        SignatureAlgorithm sigAlg;
-        switch (mldsaAlgorithm.toLowerCase()) {
-            case "mldsa44":
-                sigAlg = SignatureAlgorithm.MLDSA44;
-                break;
-            case "mldsa65":
-                sigAlg = SignatureAlgorithm.MLDSA65;
-                break;
-            case "mldsa87":
-                sigAlg = SignatureAlgorithm.MLDSA87;
-                break;
-            default:
-                throw new Exception("Unsupported ML-DSA algorithm: " + mldsaAlgorithm);
-        }
+        // Determine CA signature algorithm using CryptoUtil
+        SignatureAlgorithm sigAlg = CryptoUtil.getMLDSASignatureAlgorithm(mldsaAlgorithm);
 
         // Add extensions
         CertificateExtensions extensions = new CertificateExtensions();
@@ -2636,7 +2585,6 @@ public class hsmCompatVerifyServ {
 
         // Step 5: ML-KEM Decapsulation - recover shared secret
         log("");
-        javax.crypto.KEM kem = javax.crypto.KEM.getInstance("ML-KEM", "Mozilla-JSS");
         SymmetricKey recoveredSharedSecret;
 
         if (archiveOnly) {
@@ -2644,13 +2592,7 @@ public class hsmCompatVerifyServ {
             log("Step 5: ML-KEM decapsulation with transport private key");
             log("  Decapsulating transport KEM ciphertext to recover shared secret");
 
-            javax.crypto.KEM.Decapsulator transportDecapsulator = kem.newDecapsulator(transportPrivateKey);
-            recoveredSharedSecret = (SymmetricKey) transportDecapsulator.decapsulate(
-                kemCiphertext,
-                0,      // offset
-                32,     // size (32 bytes = 256-bit AES key)
-                "AES-ECB"  // algorithm
-            );
+            recoveredSharedSecret = CryptoUtil.decapsulateMLKEM(transportPrivateKey, kemCiphertext, 32);
             log("  - Shared secret recovered via ML-KEM decapsulation (transport)");
             log("    Shared secret size: 32 bytes (AES-256)");
         } else {
@@ -2658,13 +2600,7 @@ public class hsmCompatVerifyServ {
             log("Step 5: ML-KEM decapsulation with storage private key");
             log("  Decapsulating storage KEM ciphertext to recover shared secret");
 
-            javax.crypto.KEM.Decapsulator storageDecapsulator = kem.newDecapsulator(storagePrivateKey);
-            recoveredSharedSecret = (SymmetricKey) storageDecapsulator.decapsulate(
-                kemCiphertext,
-                0,      // offset
-                32,     // size (32 bytes = 256-bit AES key)
-                "AES-ECB"  // algorithm
-            );
+            recoveredSharedSecret = CryptoUtil.decapsulateMLKEM(storagePrivateKey, kemCiphertext, 32);
             log("  - Shared secret recovered via ML-KEM decapsulation (storage)");
             log("    Shared secret size: 32 bytes (AES-256)");
         }
@@ -2752,11 +2688,10 @@ public class hsmCompatVerifyServ {
         hsmTokenObj.importPublicKey(storagePubKey, false);
         log("  - Storage public key imported into token");
 
-        // Encapsulate with storage public key
-        javax.crypto.KEM.Encapsulator encapsulator = kem.newEncapsulator(storagePubKey);
-        javax.crypto.KEM.Encapsulated storageEncapsulated = encapsulator.encapsulate(0, 32, "AES-ECB");
-        SymmetricKey storageSharedSecret = (SymmetricKey) storageEncapsulated.key();
-        byte[] storageKemCiphertext = storageEncapsulated.encapsulation();
+        // Encapsulate with storage public key using CryptoUtil
+        CryptoUtil.KEMEncapsulation storageEncapsulation = CryptoUtil.encapsulateMLKEM(storagePubKey, 32);
+        SymmetricKey storageSharedSecret = storageEncapsulation.sharedSecret;
+        byte[] storageKemCiphertext = storageEncapsulation.ciphertext;
 
         log("  - ML-KEM encapsulation completed with storage public key");
         log("    Storage shared secret size: 32 bytes (AES-256)");
@@ -2805,13 +2740,11 @@ public class hsmCompatVerifyServ {
         log("");
         log("Step 7: KRA recovery - ML-KEM decapsulation with storage key");
 
-        // Decapsulate storage KEM ciphertext with storage private key
-        javax.crypto.KEM.Decapsulator storageDecapsulator = kem.newDecapsulator(storagePrivateKey);
-        javax.crypto.SecretKey recoveredStorageSharedSecret = storageDecapsulator.decapsulate(
-            storageKemCiphertext, 0, storageKemCiphertext.length, "AES-ECB");
+        // Decapsulate storage KEM ciphertext with storage private key using CryptoUtil
+        SymmetricKey recoveredStorageSharedSecret = CryptoUtil.decapsulateMLKEM(storagePrivateKey, storageKemCiphertext, 32);
 
         log("  - Storage shared secret recovered via ML-KEM decapsulation");
-        log("    Shared secret size: " + ((SymmetricKey)recoveredStorageSharedSecret).getLength() + " bytes (AES-256)");
+        log("    Shared secret size: " + recoveredStorageSharedSecret.getLength() + " bytes (AES-256)");
 
         // Step 7a: Unwrap user private key with recovered storage shared secret
         log("");
@@ -2822,7 +2755,7 @@ public class hsmCompatVerifyServ {
             hsmTokenObj,
             userPublicKey,
             true,  // temporary
-            (SymmetricKey) recoveredStorageSharedSecret,
+            recoveredStorageSharedSecret,
             archivedUserPrivate,
             keyWrapAlgorithm,
             null   // No IV for AES-KWP
