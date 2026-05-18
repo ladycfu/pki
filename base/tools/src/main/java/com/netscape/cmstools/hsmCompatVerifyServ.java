@@ -1555,12 +1555,12 @@ public class hsmCompatVerifyServ {
         String mldsaAlgorithm
     ) throws Exception {
 
-        // Map algorithm name to parameter size and signature algorithm using CryptoUtil
-        int paramSize = CryptoUtil.getMLDSAStrength(mldsaAlgorithm);
+        // Map algorithm name to parameter strength and signature algorithm using CryptoUtil
+        int paramStrength = CryptoUtil.getMLDSAStrength(mldsaAlgorithm);
         SignatureAlgorithm sigAlg = CryptoUtil.getMLDSASignatureAlgorithm(mldsaAlgorithm);
 
         // Generate ML-DSA key pair using CryptoUtil
-        KeyPair keyPair = CryptoUtil.generateMLDSAKeyPair(token, paramSize, null, null, null, null, null);
+        KeyPair keyPair = CryptoUtil.generateMLDSAKeyPair(token, paramStrength, null, null, null, null, null);
         PublicKey publicKey = keyPair.getPublic();
         org.mozilla.jss.crypto.PrivateKey privateKey = (org.mozilla.jss.crypto.PrivateKey) keyPair.getPrivate();
 
