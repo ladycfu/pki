@@ -200,11 +200,11 @@ public class hsmCompatVerifyServ {
         // PQC Options
         options.addOption(null, "pqc", false, "Enable PQC mode (ML-DSA for CA, ML-KEM for KRA)");
 
-        option = new Option(null, "pqc-ca-algorithm", true, "PQC CA algorithm: mldsa44, mldsa65, mldsa87 (default: mldsa65)");
+        option = new Option(null, "pqc-ca-algorithm", true, "PQC CA algorithm: ml-dsa-44, ml-dsa-65, ml-dsa-87 (default: ml-dsa-65)");
         option.setArgName("algorithm");
         options.addOption(option);
 
-        option = new Option(null, "pqc-kem-algorithm", true, "PQC KEM algorithm: mlkem512, mlkem768, mlkem1024 (default: mlkem768)");
+        option = new Option(null, "pqc-kem-algorithm", true, "PQC KEM algorithm: ml-kem-512, ml-kem-768, ml-kem-1024 (default: ml-kem-768)");
         option.setArgName("algorithm");
         options.addOption(option);
 
@@ -393,8 +393,8 @@ public class hsmCompatVerifyServ {
         System.out.println();
         System.out.println("PQC Options:");
         System.out.println("      --pqc                     Enable PQC mode (ML-DSA for CA, ML-KEM for transport/storage)");
-        System.out.println("      --pqc-ca-algorithm <alg>  PQC CA algorithm: mldsa44, mldsa65, mldsa87 (default: mldsa65)");
-        System.out.println("      --pqc-kem-algorithm <alg> PQC KEM algorithm for transport/storage: mlkem512, mlkem768, mlkem1024 (default: mlkem768)");
+        System.out.println("      --pqc-ca-algorithm <alg>  PQC CA algorithm: ml-dsa-44, ml-dsa-65, ml-dsa-87 (default: ml-dsa-65)");
+        System.out.println("      --pqc-kem-algorithm <alg> PQC KEM algorithm for transport/storage: ml-kem-512, ml-kem-768, ml-kem-1024 (default: ml-kem-768)");
         System.out.println("      --user-key-type <type>    User key type: RSA, EC, ML-KEM (default: ML-KEM if --pqc, RSA otherwise)");
         System.out.println();
         System.out.println("CA Certificate Options:");
@@ -557,26 +557,26 @@ public class hsmCompatVerifyServ {
 
         // PQC options
         boolean pqcMode = cmd.hasOption("pqc");
-        String pqcCaAlgorithm = cmd.getOptionValue("pqc-ca-algorithm", "mldsa65");
-        String pqcKemAlgorithm = cmd.getOptionValue("pqc-kem-algorithm", "mlkem768");
+        String pqcCaAlgorithm = cmd.getOptionValue("pqc-ca-algorithm", "ml-dsa-65");
+        String pqcKemAlgorithm = cmd.getOptionValue("pqc-kem-algorithm", "ml-kem-768");
 
         // User key type: controls what type of user key to expect (separate from transport)
         String userKeyType = cmd.getOptionValue("user-key-type", pqcMode ? "ML-KEM" : "RSA");
 
         // Validate PQC algorithm values
         if (pqcMode) {
-            if (!pqcCaAlgorithm.equals("mldsa44") &&
-                !pqcCaAlgorithm.equals("mldsa65") &&
-                !pqcCaAlgorithm.equals("mldsa87")) {
+            if (!pqcCaAlgorithm.equals("ml-dsa-44") &&
+                !pqcCaAlgorithm.equals("ml-dsa-65") &&
+                !pqcCaAlgorithm.equals("ml-dsa-87")) {
                 printError("Invalid --pqc-ca-algorithm value: " + pqcCaAlgorithm);
-                System.err.println("       Valid values: mldsa44, mldsa65, mldsa87");
+                System.err.println("       Valid values: ml-dsa-44, ml-dsa-65, ml-dsa-87");
                 System.exit(1);
             }
-            if (!pqcKemAlgorithm.equals("mlkem512") &&
-                !pqcKemAlgorithm.equals("mlkem768") &&
-                !pqcKemAlgorithm.equals("mlkem1024")) {
+            if (!pqcKemAlgorithm.equals("ml-kem-512") &&
+                !pqcKemAlgorithm.equals("ml-kem-768") &&
+                !pqcKemAlgorithm.equals("ml-kem-1024")) {
                 printError("Invalid --pqc-kem-algorithm value: " + pqcKemAlgorithm);
-                System.err.println("       Valid values: mlkem512, mlkem768, mlkem1024");
+                System.err.println("       Valid values: ml-kem-512, ml-kem-768, ml-kem-1024");
                 System.exit(1);
             }
         }
@@ -1544,7 +1544,7 @@ public class hsmCompatVerifyServ {
      * @param nickname Certificate nickname
      * @param subject Certificate subject DN
      * @param validityDays Validity period in days
-     * @param mldsaAlgorithm ML-DSA algorithm: mldsa44, mldsa65, or mldsa87
+     * @param mldsaAlgorithm ML-DSA algorithm: ml-dsa-44, ml-dsa-65, or ml-dsa-87
      */
     private X509Certificate createSelfSignedCertPQC(
         CryptoToken token,
@@ -1617,7 +1617,7 @@ public class hsmCompatVerifyServ {
      * @param issuerCert CA certificate
      * @param issuerNickname CA certificate nickname
      * @param mldsaAlgorithm ML-DSA algorithm used by CA
-     * @param mlkemAlgorithm ML-KEM algorithm: mlkem512, mlkem768, or mlkem1024
+     * @param mlkemAlgorithm ML-KEM algorithm: ml-kem-512, ml-kem-768, or ml-kem-1024
      * @param certType Description of certificate type (for logging)
      */
     private X509Certificate createSignedCertPQC(
