@@ -1,0 +1,7 @@
+= Server Changes =
+
+== Server-Side Key Generation Fixes for Thales Luna HSM ==
+
+With Thales Luna HSMs now supporting key wrapping with AES-KWP, server-side key
+generation and key archival/recovery operations are supported on Luna. Issues
+encountered in this new support have been addressed.
