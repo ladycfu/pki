@@ -150,14 +150,21 @@ public class CMCAuthForEST extends CMCAuth {
         // Save EST subsystem cert for auditing (before overwriting SSL_CLIENT_CERT)
         auditContext.put("estSubsystemCert", estSubsystemCert);
 
-        // Now get the RA-authenticated client cert from header and replace SSL_CLIENT_CERT
+        // EST fullcmc is supported only over mutual TLS: the EST subsystem forwards the
+        // end-user's client certificate in the pki-est-client-cert header, and that cert
+        // must become SSL_CLIENT_CERT for the rest of the CMC processing. If it is not
+        // present, reject the request.
         X509Certificate endUserCert = getClientCertificate(auditContext);
-        if (endUserCert != null) {
-            // Store it in the standard location that CMCAuth expects
-            auditContext.put(SessionContext.SSL_CLIENT_CERT, endUserCert);
-            logger.debug(method + "Set SSL_CLIENT_CERT to RA-authenticated client cert: " +
-                        endUserCert.getSubjectDN().getName());
+        if (endUserCert == null) {
+            logger.error(method + "Missing forwarded end-user certificate ("
+                    + EST_CLIENT_CERT_HEADER + " header); rejecting request");
+            throw new EInvalidCredentials(
+                    "EST fullcmc requires a forwarded end-user certificate");
         }
+
+        auditContext.put(SessionContext.SSL_CLIENT_CERT, endUserCert);
+        logger.debug(method + "Set SSL_CLIENT_CERT to forwarded end-user cert: " +
+                    endUserCert.getSubjectDN().getName());
 
         // Call parent CMCAuth.authenticate() which will now use the end-user cert
         return super.authenticate(credentials);
